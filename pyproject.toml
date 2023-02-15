@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling>=1.11.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lambic"
+authors = [{name = "Daniel Borek", email = "daniel.borek@ugent.be"}]
+readme = "README.md"
+version = "0.1.0devs"
+description = "Project for working with EEG data"
+license = {file = "LICENSE"}
+classifiers = ["License :: OSI Approved :: MIT License"]
+pidependencies = [
+    "fooof",
+    "mne",
+    "seaborn"
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "src"
+]
