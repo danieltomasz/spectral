@@ -6,3 +6,5 @@ data/
 .ipynb_checkpoints
 */.ipynb_checkpoints
 */.virtual_documents
+*/__pycache__/
+notebooks/data/
