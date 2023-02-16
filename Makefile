@@ -20,7 +20,8 @@ install:
 	pyenv local ${VENV}
 	$(PYTHON) -m pip  install -U pip setuptools wheel flit
 	export CPATH=${CPATH}:${INLCUDE_CPATH}; export HDF5_DIR=${HDF5_DIR}:${INCLUDE_HDF5_DIR}; $(PYTHON) -m pip install h5py --no-cache-dir
-	$(PYTHON) -m flit -install --symlink
+	$(PYTHON) -m pip install -U git+https://github.com/fooof-tools/fooof.git
+	$(PYTHON) -m flit install --symlink
 	$(PYTHON) -m pip install  -r requirements.txt
 	$(PYTHON) -m ipykernel install --user --name ${VENV}
 

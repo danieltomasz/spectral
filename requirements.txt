@@ -12,7 +12,6 @@ tqdm
 seaborn
 scipy
 scikit-learn
-fooof
 mne
 bycycle
 factor_analyzer
