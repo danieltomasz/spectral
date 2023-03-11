@@ -9,3 +9,10 @@ data/
 */__pycache__/
 notebooks/data/
 notebooks/
+tests/__pycache__/
+*.DS_Store
+.pytest_cache
+.idea/
+.vscode/
+tests/ipynb_checkpoints/
+examples/
