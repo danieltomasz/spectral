@@ -1,23 +1,11 @@
 import pandas as pd
 import numpy as np
-from fooof.sim.gen import gen_freqs, gen_group_power_spectra
 from fooof.core.info import get_ap_indices, get_peak_indices
 from fooof.core.funcs import infer_ap_func
 from fooof import FOOOFGroup
 
 
-def generate_example_spectra():
-    n_spectra = 2
-    freq_range = [1.5, 50]
-    ap_params = [[0.5, 1], [1, 1.5]]
-    pe_params = [[10, 0.4, 1], [10, 0.2, 1, 22, 0.1, 3]]
-    nlv = 0.02
-    # Simulate a group of power spectra
-    [freqs, powers, sim_params] = gen_group_power_spectra(
-        n_spectra, freq_range, ap_params, pe_params, nlv, return_params=True
-    )
-    # type: ignore
-    return freqs, powers, sim_params
+from lambic.utils import generate_example_spectra
 
 
 def psd_fooof(freqs, spectra, fg: object = None, freq_range=None):

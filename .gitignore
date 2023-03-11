@@ -8,3 +8,4 @@ data/
 */.virtual_documents
 */__pycache__/
 notebooks/data/
+notebooks/
