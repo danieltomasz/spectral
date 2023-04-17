@@ -3,7 +3,7 @@
 .PHONY: install
 
 PROJECT?=lambic
-VERSION?=3.11.2
+VERSION?=3.11.3
 VENV=${PROJECT}-${VERSION}
 VENV_DIR=$(shell pyenv root)/versions/${VENV}
 PYTHON=${VENV_DIR}/bin/python

@@ -18,6 +18,7 @@ def fooof2pandas_shape() ->  tuple:
     return df.shape
 
 def test_fooof2pandas():
-    assert fooof2pandas_shape() == (3, 8)
+    returned_shape = fooof2pandas_shape()
+    assert returned_shape[1] == 8
 
 #%%

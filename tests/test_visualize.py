@@ -1,13 +1,16 @@
 # %%
 from pathlib import Path
-import importlib
 import pytest
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 import lambic
-importlib.reload(lambic)
+from lambic.utils import reload_package
 
+reload_package(lambic)
+
+# %%
 
 def test_plot_lines():
     # Get frequency axis (x-axis)
@@ -23,10 +26,24 @@ def test_plot_lines():
     )
 
     lambic.visualize.plot_lines(final_list)
+
+def test_plot_group_lines():
+    # Get frequency axis (x-axis)
+    taps = {
+        "offset": [-16.237085, -15.772295, -16.23885],
+        "exponent": [1.18727834, 2.367788, 1.996912],
+        "Y_OH_OL": ["O_H", "O_L", "Y_H" ],
+    }
+    aps = pd.DataFrame(taps)
+    final_list = lambic.visualize.create_slope_from_parameters(
+        aps, ["Y_OH_OL"]
+    )
+
+    lambic.visualize.plot_group_lines(final_list, condition = "Y_OH_OL")
     assert True
 
 
 # %%
 if __name__ == '__main__':
-    test_plot_lines()
+    test_plot_group_lines()
 # %%

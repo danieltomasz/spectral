@@ -1,17 +1,21 @@
 [build-system]
-requires = ["hatchling>=1.11.0"]
-build-backend = "hatchling.build"
+requires = ["flit_core>=3.3"]
+build-backend = "flit_core.buildapi"
 
 [project]
 name = "lambic"
 authors = [{name = "Daniel Borek", email = "daniel.borek@ugent.be"}]
 readme = "README.md"
-version = "0.1.0dev"
+version = "0.1.1dev"
 description = "Project for working with EEG data"
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
-pidependencies = [
+
+requires-python = ">=3.7"
+
+dependencies = [
     "mne",
+    "pandas",
     "seaborn",
     "xarray",
     "h5netcdf",
