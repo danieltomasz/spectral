@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import lambic
-from lambic.utils import reload_package
+import poirot
+from poirot.utils import reload_package
 
-reload_package(lambic)
+reload_package(poirot)
 
 # %%
 
@@ -21,11 +21,11 @@ def test_plot_lines():
         "subjectID": ["sub-032528", "sub-032448"],
     }
     aps = pd.DataFrame(taps)
-    final_list = lambic.visualize.create_slope_from_parameters(
+    final_list = poirot.visualize.create_slope_from_parameters(
         aps, ["condition", "subjectID"]
     )
 
-    lambic.visualize.plot_lines(final_list)
+    poirot.visualize.plot_lines(final_list)
 
 def test_plot_group_lines():
     # Get frequency axis (x-axis)
@@ -35,11 +35,11 @@ def test_plot_group_lines():
         "Y_OH_OL": ["O_H", "O_L", "Y_H" ],
     }
     aps = pd.DataFrame(taps)
-    final_list = lambic.visualize.create_slope_from_parameters(
+    final_list = poirot.visualize.create_slope_from_parameters(
         aps, ["Y_OH_OL"]
     )
 
-    lambic.visualize.plot_group_lines(final_list, condition = "Y_OH_OL")
+    poirot.visualize.plot_group_lines(final_list, condition = "Y_OH_OL")
     assert True
 
 

@@ -2,8 +2,8 @@ import pytest
 import pandas as pd
 from fooof import FOOOFGroup
 
-from lambic.spectrum import psd_fooof, fooof2pandas
-from lambic.utils import generate_example_spectra
+from poirot.spectrum import psd_fooof, fooof2pandas
+from poirot.utils import generate_example_spectra
 
 def fooof2pandas_shape() ->  tuple:
     freqs, spectra, sim_params = generate_example_spectra()

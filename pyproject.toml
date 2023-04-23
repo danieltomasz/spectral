@@ -3,7 +3,7 @@ requires = ["flit_core>=3.3"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "lambic"
+name = "poirot"
 authors = [{name = "Daniel Borek", email = "daniel.borek@ugent.be"}]
 readme = "README.md"
 version = "0.1.1dev"
@@ -19,6 +19,7 @@ dependencies = [
     "seaborn",
     "xarray",
     "h5netcdf",
+    "netcdf4"
 ]
 
 [tool.pytest.ini_options]

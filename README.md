@@ -1,6 +1,6 @@
-# Lambic is a package for working with the specparam package 
+# poirot is a package for working with the specparam package 
 
-Lambic is also a belgian sour beer.
+poirot is also a belgian sour beer.
 
 ### For installing the python library that will work with reticulate
 

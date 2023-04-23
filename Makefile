@@ -2,7 +2,7 @@
 
 .PHONY: install
 
-PROJECT?=lambic
+PROJECT?=poirot
 VERSION?=3.11.3
 VENV=${PROJECT}-${VERSION}
 VENV_DIR=$(shell pyenv root)/versions/${VENV}
