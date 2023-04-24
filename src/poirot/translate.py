@@ -115,9 +115,11 @@ def define_region_dict():
     }
 
 def prepare_grouping(da, coordinate: str,  partition_dict: dict):
+# TODO Check lisrt
     return [  # assing specific coordinates
         key
         for element in da[coordinate].values
         for key, value in partition_dict.items()
         if element in value
     ]
+

@@ -6,13 +6,13 @@ from fooof.core.funcs import infer_ap_func
 from fooof import FOOOFGroup
 
 
-def psd_fooof(freqs, spectra, fg: FOOOFGroup = None, freq_range=None):
+def psd_fooof(freqs, spectra, fg = None, freq_range=None):
     """
     Applies the FOOOF algorithm on power spectral density (PSD) data.
 
     Args:
         freqs (array): Frequency array.
-        spectra (array): Spectra data.
+        spectra (array): 2d array, shape: [n_power_spectra, n_freqs]
         fg (FOOOFGroup object, optional):
             FOOOFGroup object. Defaults to None.
         freq_range (array, optional):
@@ -30,7 +30,8 @@ def psd_fooof(freqs, spectra, fg: FOOOFGroup = None, freq_range=None):
         )
     if freq_range is None:
         freq_range = [2, 48]
-    return fg.fit(freqs, spectra, freq_range=freq_range, n_jobs=-1, progress="tqdm")
+    fg.fit(freqs, spectra, freq_range=freq_range, n_jobs=-1, progress="tqdm")
+    return fg
 
 
 def fooof2pandas(fg):
