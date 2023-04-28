@@ -6,7 +6,7 @@ from fooof.core.funcs import infer_ap_func
 from fooof import FOOOFGroup
 
 
-def psd_fooof(freqs, spectra, fg = None, freq_range=None):
+def psd_fooof(freqs, spectra, fg=None, freq_range=None):
     """
     Applies the FOOOF algorithm on power spectral density (PSD) data.
 
@@ -32,6 +32,42 @@ def psd_fooof(freqs, spectra, fg = None, freq_range=None):
         freq_range = [2, 48]
     fg.fit(freqs, spectra, freq_range=freq_range, n_jobs=-1, progress="tqdm")
     return fg
+
+def specparam_xr(xs, stacked_cols, fg, freq_range):
+    
+    xs = xs.stack(point=stacked_cols).transpose("point", "freqs")
+    # assumption stacked dim is called point
+    freqs = xs.freqs.values
+    spectra = xs.values
+    fg.fit(freqs, spectra, freq_range=freq_range, n_jobs=-1, progress="tqdm")
+    df = fooof2pandas(fg)
+    return (
+        pd.DataFrame.from_records(xs.point.values, columns=stacked_cols)
+        .assign(ID=np.arange(len(xs.point.values)))
+        .merge(df, on="ID")
+        .drop(columns=["ID"])
+    )
+    
+def specparam_attributes(xs, stacked_cols, fg, freq_range):
+    
+    xs = xs.stack(point=stacked_cols).transpose("point", "freqs")
+    # assumption stacked dim is called point
+    freqs = xs.freqs.values
+    spectra = xs.values
+    fg.fit(freqs, spectra, freq_range=freq_range, n_jobs=-1, progress="tqdm")
+    df = fooof2pandas(fg)
+    # get an list of additioanl columns
+    l1 = ["freqs", "point"]
+    l1.extend(stacked_cols)
+    l2 = xs._coords.keys()
+    list_of_columns = list(filter(lambda x: x not in l1, l2))
+    return (
+        pd.DataFrame.from_records(xs.point.values, columns=stacked_cols)
+        .assign(ID=np.arange(len(xs.point.values)))
+        .assign(**{column: xs[column].values for column in list_of_columns})
+        .merge(df, on="ID")
+        .drop(columns=["ID"])
+    )
 
 
 def fooof2pandas(fg):

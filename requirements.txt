@@ -24,3 +24,4 @@ pymatreader
 pingouin
 pyvista
 flit
+tables
