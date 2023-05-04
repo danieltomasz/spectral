@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path, PurePath
+from pathlib import PosixPath
+
 from glob import glob
 import scipy.io as sio
 import numpy as np
@@ -14,7 +16,7 @@ import matplotlib.pyplot as plt
 
 from poirot.translate import prepare_grouping
 
-def load_mat_file(filepath: str, sub: list):
+def load_mat_file(filepath: PosixPath | str, sub: list):
     mat_content = sio.loadmat(filepath)
     roi_names = [l.flatten()[0]
                 for l in mat_content["RowNames"].flatten()]  # flatten
@@ -26,6 +28,7 @@ def load_mat_file(filepath: str, sub: list):
         dims=["roi_names", "sub", "freqs"],
         coords={"roi_names": roi_names, "sub": sub, "freqs": freqs},
     )
+    
 
 
 def plot_psd_vs_freq_roi(
