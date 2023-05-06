@@ -5,6 +5,23 @@ from fooof.core.info import get_ap_indices
 from fooof.core.funcs import infer_ap_func
 from fooof import FOOOFGroup
 
+from neurodsp.spectral import compute_spectrum
+
+
+def my_compute_spectrum(data, fs, nperseg):
+    """
+    Computes the power spectrum of a signal.
+
+    Args:
+        data (_type_): _description_
+        fs (_type_): _description_
+        nperseg (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    sig , spectrum = compute_spectrum(data, fs=fs,nperseg=nperseg)
+    return  spectrum
 
 def psd_fooof(freqs, spectra, fg=None, freq_range=None):
     """

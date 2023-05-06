@@ -1,12 +1,25 @@
 import os
 import types
 import importlib
-
+from pathlib import Path
 from operator import itemgetter
 
 from fooof.sim.gen import gen_freqs, gen_group_power_spectra
 
-
+def get_base_path() -> Path:
+    """Return a base path of current folder, similar to R packege 'here'.
+        
+    Returns:
+        Path: Path object pointing to the parent of the folder where the script is located.
+            If your script is `/root/scripts/script.py`, the result will be an absolute path '/root'.
+    """
+    try:
+        return Path(__file__).parent.parent
+    except NameError as error:
+        # This will give you  root folder of the project if this runned through jupyter notebook
+        return Path().joinpath().absolute().parents[0]
+    except Exception as exception:
+        print(exception)
 
 
 def reload_package(package):
