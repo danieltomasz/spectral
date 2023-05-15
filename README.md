@@ -7,3 +7,4 @@ poirot is also a belgian sour beer.
 ```
 CONFIGURE_OPTS=--enable-shared pyenv install 3.11.1
 ```
+

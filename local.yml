@@ -1,6 +1,7 @@
 name: conda-poirot-3.10
 channels:
     - conda-forge
+    - bioconda
 dependencies:
   - python=3.10
   - numpy
@@ -19,9 +20,12 @@ dependencies:
   - scikit-learn
   - ipykernel
   - spyder
+  - spyder-notebook
   - flit
   - python-dotenv
-  - mne>=1.3
+  - mne>=1.4
+  - pip
+  - snakemake
   - pip:
     - jupyter_ai
     - git+https://github.com/fooof-tools/fooof.git

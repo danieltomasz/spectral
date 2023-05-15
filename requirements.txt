@@ -25,3 +25,6 @@ pingouin
 pyvista
 flit
 tables
+h5netcdf
+netcdf4
+regex
