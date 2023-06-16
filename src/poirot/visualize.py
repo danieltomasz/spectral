@@ -66,3 +66,4 @@ def plot_fit(df: xr.DataArray, fm :FOOOF, freq_range, file_name :str = None, fil
         fm.plot(save_fig=True, file_name= file_name, file_path=file_path)
     except Exception as e:
         print("Caught an error: ", e)    
+# %%

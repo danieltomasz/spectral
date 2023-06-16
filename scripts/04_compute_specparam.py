@@ -10,49 +10,31 @@ import datetime
 import json
 
 from fooof import FOOOF, FOOOFGroup
-
 from poirot.spectrum import specparam_attributes
 
-
-# %%
-def get_specparam_dataframe(folder :str):
+def get_single_specparam_estimation(run: Path, spec_params :dict, stacked_cols : list):
+    "Compute the specparam for a single run and return a dataframe"
     fg = FOOOFGroup(**spec_params)
-    spectra = list(Path(folder).glob("*.nc"))
-    df_list = []
-    stacked_cols = ['labels', 'sub', 'session']
-    for spectrum in spectra:
-        ds = xr.open_dataarray(spectra)
-        ds.close()
+    return (xr.open_dataarray(run)
+    .mean("trial")
+    .pipe(
+        specparam_attributes,
+        stacked_cols=stacked_cols,
+        fg=fg,
+        freq_range=FREQ_RANGE,
+    )
+      )
 
-
-# def get_specpraram_single(ds : xr.DataArray):
-    
-
-# for subject in SUBS:
-#     ds = xr.open_dataarray(
-#         f"{DATA_FOLDER }/interim/timeseries/{subject}_MEG_ASSR_times.nc")
-#     ds.close()
-#     df = (
-#         process_spectrum(ds, fs = FS, nperseg = NPERSEG, method=METHOD)
-#         .stack(trial_iter_number=('trial', 'iter_number'))
-#         .mean("trial_iter_number")
-#         .pipe(
-#             specparam_attributes,
-#             stacked_cols=stacked_cols,
-#             fg=fg,
-#             freq_range=FREQ_RANGE,
-#         )
-#     )
-#     df_list.append(df)
-# df_concat = pd.concat(df_list)
-
+def get_all_specparam_estimation(folder: str, spec_params :dict, stacked_cols : list):
+    """Return a dataframe with all specparam estimation for a given folder"""
+    list_of_dataframes = [] 
+    runs = list(Path(folder).glob("*.nc"))
+    for run in tqdm.tqdm(runs):
+        ds =  get_single_specparam_estimation(run, spec_params, stacked_cols)
+        list_of_dataframes.append(ds)
+    return pd.concat(list_of_dataframes)
 
 # %%
-
-# PSD Computation
-FS = 600
-NPERSEG = 2*FS
-METHOD = 'medfilt'
 
 # SPECPARAMS
 FREQ_RANGE = [2, 45]
@@ -66,27 +48,26 @@ spec_params = {
 }
 
 base_folder = "/Volumes/ExtremePro/Analyses/tDCS_MEG/"
-psd_folder_aspo = f'{base_folder}/interim/psd/aspo'
-specparam_folder_aspo = f'{base_folder}/interim/specparam/aspo'
 
 
-# %%
-fg = FOOOFGroup(**spec_params)
-spectras = list(Path(psd_folder_aspo).glob("*.nc"))
-spectrum = spectras[0]
-stacked_cols = ['labels', 'sub', 'session', "iter_number"]
-# ds = xr.open_dataarray(spectrum).mean("trial")
-# xs = ds.stack(point=stacked_cols).transpose("point", "freqs")
-# freqs = xs.freqs.values
-# spectra = xs.values
-# fg.fit(freqs, spectra, freq_range=FREQ_RANGE, n_jobs=-1, progress="tqdm")
-da = (xr.open_dataarray(spectrum)
-    .mean("trial")
-    .pipe(
-        specparam_attributes,
-        stacked_cols=stacked_cols,
-        fg=fg,
-        freq_range=FREQ_RANGE,
-    )
-      )
+
+specparam_folder = f'{base_folder}/interim/specparam/'
+
+dataset = "assr"
+
+if __name__ == '__main__':
+    match dataset:
+        case "aspo":
+            psd_folder_aspo = f'{base_folder}/interim/psd/aspo'
+            stacked_cols = ['labels', 'sub', 'session', "iter_number"]
+            da = get_all_specparam_estimation(psd_folder_aspo, spec_params, stacked_cols)
+            da.to_csv(f"{specparam_folder}/specparam_ASPO.csv")
+        case "assr":
+            psd_folder_assr = f'{base_folder}/interim/psd/assr/padded'
+            #  add condition to the stacked cols
+            stacked_cols = ['labels', 'sub', 'session', "iter_number", "condition"]
+            da = get_all_specparam_estimation(psd_folder_assr, spec_params, stacked_cols)
+            da.to_csv(f"{specparam_folder}/specparam_ASSR.csv")
+
+
 # %%
