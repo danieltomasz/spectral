@@ -1,6 +1,5 @@
 jupyterlab
 jupyter
-jupyterlab-lsp
 jupytext
 ipympl
 pytest

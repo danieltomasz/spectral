@@ -46,3 +46,21 @@ def plot_group_lines(df, condition = 'condition'):
     plt.ylabel("Power", size=20)
     plt.title("Power Spectrum", size=20)
     return fig
+
+
+def plot_fit(df: xr.DataArray, fm :FOOOF, freq_range, file_name :str = None, file_path :str = None):
+    freqs = df.freqs.values
+    spectrum = df.values[0]
+    try:
+        fm.add_data(freqs, spectrum, freq_range)
+        roi_name = df.labels.values.item().replace(" ", "")
+        fm.fit()
+        # Filename and path to save the figure
+        if file_name is None:
+            file_name = f"{df.sub.values.item()}_{roi_name}_spectrum.png"
+        if file_path is None:
+            file_path = 'figures'
+        
+        fm.plot(save_fig=True, file_name= file_name, file_path=file_path)
+    except Exception as e:
+        print("Caught an error: ", e)    

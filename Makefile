@@ -3,7 +3,7 @@
 .PHONY: install
 
 PROJECT?=poirot
-VERSION?=3.11.3
+VERSION?=3.11.4
 VENV=${PROJECT}-${VERSION}
 VENV_DIR=$(shell pyenv root)/versions/${VENV}
 PYTHON=${VENV_DIR}/bin/python
@@ -14,7 +14,7 @@ INCLUDE_HDF5_DIR=/opt/homebrew/opt/hdf5/1.12.2_2
 
 CVERSION?=3.10
 CVENV?=conda-${PROJECT}-${CVERSION}
-CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
+CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ;  conda activate
 
 
 install:
@@ -29,7 +29,7 @@ install:
 	$(PYTHON) -m pip install -U git+https://github.com/pyxnat/pyxnat.git@bbrc
 	$(PYTHON) -m pip install -U git+https://github.com/danieltomasz/python-ggseg.git
 	$(PYTHON) -m flit install --symlink --deps none
-	$(PYTHON) -m ipykernel install --user --name ${VENV}
+	$(PYTHON) -m PYDEVD_DISABLE_FILE_VALIDATION=1 ipykernel install --user --name ${VENV}
 
 update:
 	$(PYTHON) -m pip install --upgrade -r requirements.txt --upgrade-strategy=eager
@@ -37,6 +37,8 @@ update:
 purge:
 	$(PYTHON) -m pip cache purge
 
+kernel:
+	$(PYTHON) -m PYDEVD_DISABLE_FILE_VALIDATION=1 ipykernel install --user --name ${VENV}
 
 uninstall:
 	@echo "Removing $(VENV)"
@@ -64,6 +66,7 @@ conda-install:
 
 conda-update:
 	conda clean --all
+	conda update -n base -c conda-forge conda
 	$(CONDA_ACTIVATE) ${CVENV};  conda env update --name ${CVENV} --file local.yml --prune
 
 conda-info:
@@ -80,3 +83,8 @@ conda-list:
 
 spyder:
 	$(CONDA_ACTIVATE) ${CVENV}; spyder
+
+conda-ai:
+	conda create --name jupyter-ai --channel conda-forge   python==3.10.11  jupyterlab 
+	conda activate jupyter-ai; pip install  jupyter_ai;pip uninstall grpcio; conda install grpcio; 
+	conda activate jupyter-ai; ipython kernel install --user --name=jupyter-ai

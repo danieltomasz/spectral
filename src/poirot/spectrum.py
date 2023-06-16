@@ -1,11 +1,77 @@
 import pandas as pd
 import numpy as np
-
+import xarray as xr
 from fooof.core.info import get_ap_indices
 from fooof.core.funcs import infer_ap_func
-from fooof import FOOOFGroup
+from fooof import FOOOF, FOOOFGroup
 
 from neurodsp.spectral import compute_spectrum
+
+def process_spectrum(ds: xr.DataArray, fs: float, nperseg: int, method: str, time_dim = "time") -> xr.DataArray:
+    # Computes the power spectrum of a signal.
+    def my_compute_spectrum(data: xr.DataArray, fs: float, nperseg: int, method: str) -> xr.DataArray:
+        if method == 'welch':
+            _, spectrum = compute_spectrum(
+                data, fs=fs, method='welch', nperseg=nperseg) # type: ignore
+        elif method == 'medfilt':
+            _, spectrum = compute_spectrum(
+                data, fs=fs, method='medfilt') # type: ignore
+        else:
+            raise ValueError(f"Invalid type: {method}")
+        return spectrum
+
+    spectrum = (
+        xr.apply_ufunc(
+            my_compute_spectrum, ds,
+            vectorize=True,
+            input_core_dims=[[time_dim]],
+            output_core_dims=[['freqs']],
+            kwargs={"fs": fs, "nperseg": nperseg, "method": method})
+        .assign_coords(freqs=lambda x: np.linspace(0, fs/2, len(x.freqs)))
+    )
+
+    return spectrum
+
+   
+def plot_fit(df: xr.DataArray, fm :FOOOF, freq_range, file_name :str = None, file_path :str = None):
+    freqs = df.freqs.values
+    spectrum = df.values[0]
+    try:
+        fm.add_data(freqs, spectrum, freq_range)
+        roi_name = df.labels.values.item().replace(" ", "")
+        fm.fit()
+        # Filename and path to save the figure
+        if file_name is None:
+            file_name = f"{df.sub.values.item()}_{roi_name}_spectrum.png"
+        if file_path is None:
+            file_path = 'figures'
+        
+        fm.plot(save_fig=True, file_name= file_name, file_path=file_path)
+    except Exception as e:
+        print("Caught an error: ", e)    
+
+def specparam_attributes(xs, stacked_cols, fg, freq_range):
+    
+    xs = xs.stack(point=stacked_cols).transpose("point", "freqs")
+    # assumption stacked dim is called point
+    freqs = xs.freqs.values
+    spectra = xs.values
+    fg.fit(freqs, spectra, freq_range=freq_range, n_jobs=-1, progress="tqdm")
+    df = fooof2pandas(fg)
+    # get an list of additioanl columns
+    l1 = ["freqs", "point"]
+    l1.extend(stacked_cols)
+    l2 = xs._coords.keys()
+    list_of_columns = list(filter(lambda x: x not in l1, l2))
+    return (
+        pd.DataFrame.from_records(xs.point.values, columns=stacked_cols)
+        .assign(ID=np.arange(len(xs.point.values)))
+        .assign(**{column: xs[column].values for column in list_of_columns})
+        .merge(df, on="ID")
+        .drop(columns=["ID"])
+    )
+
+
 
 
 def my_compute_spectrum(data, fs, nperseg):
@@ -65,27 +131,6 @@ def specparam_xr(xs, stacked_cols, fg, freq_range):
         .drop(columns=["ID"])
     )
     
-def specparam_attributes(xs, stacked_cols, fg, freq_range):
-    
-    xs = xs.stack(point=stacked_cols).transpose("point", "freqs")
-    # assumption stacked dim is called point
-    freqs = xs.freqs.values
-    spectra = xs.values
-    fg.fit(freqs, spectra, freq_range=freq_range, n_jobs=-1, progress="tqdm")
-    df = fooof2pandas(fg)
-    # get an list of additioanl columns
-    l1 = ["freqs", "point"]
-    l1.extend(stacked_cols)
-    l2 = xs._coords.keys()
-    list_of_columns = list(filter(lambda x: x not in l1, l2))
-    return (
-        pd.DataFrame.from_records(xs.point.values, columns=stacked_cols)
-        .assign(ID=np.arange(len(xs.point.values)))
-        .assign(**{column: xs[column].values for column in list_of_columns})
-        .merge(df, on="ID")
-        .drop(columns=["ID"])
-    )
-
 
 def fooof2pandas(fg):
     """

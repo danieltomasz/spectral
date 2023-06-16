@@ -3,7 +3,7 @@ channels:
     - conda-forge
     - bioconda
 dependencies:
-  - python=3.10
+  - python=3.10.11
   - numpy
   - pandas
   - scipy
@@ -27,8 +27,9 @@ dependencies:
   - pip
   - snakemake
   - pip:
-    - jupyter_ai
     - git+https://github.com/fooof-tools/fooof.git
     - git+https://github.com/danieltomasz/python-ggseg.git
     - git+https://github.com/pyxnat/pyxnat.git@bbrc
+    - jupyter_ai
+
 

@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "poirot"
 authors = [{name = "Daniel Borek", email = "daniel.borek@ugent.be"}]
 readme = "README.md"
-version = "0.1.1dev"
+version = "0.1.1dev0"
 description = "Project for working with EEG data"
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
