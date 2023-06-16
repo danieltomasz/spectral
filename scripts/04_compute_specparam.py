@@ -70,4 +70,3 @@ if __name__ == '__main__':
             da.to_csv(f"{specparam_folder}/specparam_ASSR.csv")
 
 
-# %%
