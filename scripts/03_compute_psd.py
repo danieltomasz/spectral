@@ -8,13 +8,6 @@ from pathlib import Path
 from tqdm import tqdm
 
 
-from fooof import FOOOFGroup
-from fooof.core.info import get_ap_indices
-from fooof.core.funcs import infer_ap_func
-from fooof import FOOOFGroup
-
-from neurodsp.spectral import compute_spectrum
-
 from poirot.spectrum import process_spectrum
 
 # %%

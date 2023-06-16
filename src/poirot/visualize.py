@@ -3,7 +3,9 @@
 #%% import packages
 
 import numpy as np
+import xarray as xr
 import pandas as pd
+from fooof import FOOOF, FOOOFGroup
 from fooof.core.funcs import gaussian_function, expo_nk_function
 
 import matplotlib.pyplot as plt

@@ -8,11 +8,13 @@ from fooof import FOOOF, FOOOFGroup
 from neurodsp.spectral import compute_spectrum
 
 def process_spectrum(ds: xr.DataArray, fs: float, nperseg: int, method: str, time_dim = "time") -> xr.DataArray:
-    # Computes the power spectrum of a signal.
+    """
+    Computes the power spectrum of a signal.
+    """
     def my_compute_spectrum(data: xr.DataArray, fs: float, nperseg: int, method: str) -> xr.DataArray:
         if method == 'welch':
             _, spectrum = compute_spectrum(
-                data, fs=fs, method='welch', nperseg=nperseg) # type: ignore
+                data, fs=fs, method='welch', nperseg=nperseg,  avg_type='median', window='hann') 
         elif method == 'medfilt':
             _, spectrum = compute_spectrum(
                 data, fs=fs, method='medfilt') # type: ignore
@@ -31,24 +33,6 @@ def process_spectrum(ds: xr.DataArray, fs: float, nperseg: int, method: str, tim
     )
 
     return spectrum
-
-   
-def plot_fit(df: xr.DataArray, fm :FOOOF, freq_range, file_name :str = None, file_path :str = None):
-    freqs = df.freqs.values
-    spectrum = df.values[0]
-    try:
-        fm.add_data(freqs, spectrum, freq_range)
-        roi_name = df.labels.values.item().replace(" ", "")
-        fm.fit()
-        # Filename and path to save the figure
-        if file_name is None:
-            file_name = f"{df.sub.values.item()}_{roi_name}_spectrum.png"
-        if file_path is None:
-            file_path = 'figures'
-        
-        fm.plot(save_fig=True, file_name= file_name, file_path=file_path)
-    except Exception as e:
-        print("Caught an error: ", e)    
 
 def specparam_attributes(xs, stacked_cols, fg, freq_range):
     
@@ -71,23 +55,6 @@ def specparam_attributes(xs, stacked_cols, fg, freq_range):
         .drop(columns=["ID"])
     )
 
-
-
-
-def my_compute_spectrum(data, fs, nperseg):
-    """
-    Computes the power spectrum of a signal.
-
-    Args:
-        data (_type_): _description_
-        fs (_type_): _description_
-        nperseg (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    sig , spectrum = compute_spectrum(data, fs=fs,nperseg=nperseg)
-    return  spectrum
 
 def psd_fooof(freqs, spectra, fg=None, freq_range=None):
     """
