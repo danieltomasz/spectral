@@ -3,7 +3,8 @@ channels:
     - conda-forge
     - bioconda
 dependencies:
-  - python=3.10.11
+  - python=3.10.12
+  - blas=*=accelerate
   - numpy
   - pandas
   - scipy
