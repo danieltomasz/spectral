@@ -23,3 +23,4 @@ __pycache__
 **/.spyproject/
 /.quarto/
 .Rproj.user
+_archive/

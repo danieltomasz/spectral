@@ -7,7 +7,7 @@ from pathlib import Path
 
 from matplotlib import pyplot as plt
 from poirot.spectrum import specparam_attributes, process_spectrum
-from poirot.specparam import create_specparam_object, plot_fit
+#from poirot.specparam import create_specparam_object, plot_fit
 
 
 def split_pad_time(ds, fs, time_range, condition='STIM', pad_ratio=0.5 ):
@@ -62,16 +62,17 @@ def save_trial(trial : Path , output_folder, conditions: list[dict]):
     stem = trial.stem
     for cond in conditions:
         ds_cond = create_conditions(ds, fs, cond["time_range"], cond["condition"], pad_ratio=0.5 )
-        ds_cond.to_netcdf(f"{output_folder}/{cond['condition']}_{stem}.nc")
+        ds_cond.to_netcdf(f"{output_folder}/{stem}_{cond['condition']}.nc")
     
 # %%
 
 fs = 600
 
 base_folder = "/Volumes/ExtremePro/Analyses/tDCS_MEG/"
-input_folder_assr = f'{base_folder}/interim/timeseries/assr/'
-
-output_folder_assr = f'{base_folder}/interim/timeseries/assr/padded/'
+atlas = "Destrieux"
+mode = "assr"
+input_folder_assr = f'{base_folder}/{atlas}/timeseries/{mode}/'
+output_folder_assr = f'{base_folder}/{atlas}/timeseries/{mode}/padded/'
 
 STIM = {
     'time_range': (0, 1),

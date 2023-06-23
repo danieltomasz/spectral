@@ -1,0 +1,89 @@
+updating R_LD_LIBRARY_PATH ...
+Loading required package: Rcpp
+Loading 'brms' package (version 2.19.0). Useful instructions
+can be found by typing help('brms'). A more detailed introduction
+to the package is available through vignette('brms_overview').
+
+Attaching package: ‘brms’
+
+The following object is masked from ‘package:stats’:
+
+    ar
+
+Loading required package: cmdstanr
+This is cmdstanr version 0.5.3
+- CmdStanR documentation and vignettes: mc-stan.org/cmdstanr
+- CmdStan path: /Users/daniel/.cmdstan/cmdstan-2.32.2
+- CmdStan version: 2.32.2
+In file included from /var/folders/xq/sl7xjp_95qx7wfngy6s6vvg00000gn/T/RtmpbegT97/model-b6a6155bbf7b.hpp:1:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/src/stan/model/model_header.hpp:4:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/stan/math.hpp:19:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/stan/math/rev.hpp:10:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/stan/math/rev/fun.hpp:198:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/stan/math/prim/functor.hpp:15:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/stan/math/prim/functor/integrate_ode_rk45.hpp:6:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/stan/math/prim/functor/ode_rk45.hpp:9:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/numeric/odeint.hpp:76:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/numeric/odeint/integrate/observer_collection.hpp:23:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/function.hpp:30:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/function/detail/prologue.hpp:17:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/function/function_base.hpp:21:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/type_index.hpp:29:
+In file included from /Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/type_index/stl_type_index.hpp:47:
+/Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/container_hash/hash.hpp:132:33: warning: 'unary_function<const std::error_category *, unsigned long>' is deprecated [-Wdeprecate
+d-declarations]
+        struct hash_base : std::unary_function<T, std::size_t> {};
+                                ^
+
+/Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/container_hash/hash.hpp:692:18: note: in instantiation of template class 'boost::hash_detail::hash_base<const std::error_category *>' requested here
+        : public boost::hash_detail::hash_base<T*>
+                 ^
+/Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/container_hash/hash.hpp:420:24: note: in instantiation of template class 'boost::hash<const std::error_category *>' requested here
+        boost::hash<T> hasher;
+                       ^
+/Users/daniel/.cmdstan/cmdstan-2.32.2/stan/lib/stan_math/lib/boost_1.78.0/boost/container_hash/hash.hpp:551:9: note: in instantiation of function template specialization 'boost::hash_combine<const std::error_category *>' requested here
+        hash_combine(seed, &v.category());
+        ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/unary_function.h:23:29: note: 'unary_function<const std::error_category *, unsigned long>' has been explicitly marked deprecated here
+struct _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX11 unary_function
+                            ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config:825:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX11'
+#    define _LIBCPP_DEPRECATED_IN_CXX11 _LIBCPP_DEPRECATED
+                                        ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config:810:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+#      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+                                                ^
+
+1 warning generated.
+
+Start sampling
+Running MCMC with 4 chains, at most 8 in parallel, with 4 thread(s) per chain...
+
+Chain 1 Iteration:   1 / 1000 [  0%]  (Warmup) 
+Chain 2 Iteration:   1 / 1000 [  0%]  (Warmup) 
+Chain 3 Iteration:   1 / 1000 [  0%]  (Warmup) 
+Chain 4 Iteration:   1 / 1000 [  0%]  (Warmup) 
+Chain 2 Iteration: 100 / 1000 [ 10%]  (Warmup) 
+Chain 1 Iteration: 100 / 1000 [ 10%]  (Warmup) 
+Chain 4 Iteration: 100 / 1000 [ 10%]  (Warmup) 
+Chain 3 Iteration: 100 / 1000 [ 10%]  (Warmup) 
+Chain 1 Iteration: 200 / 1000 [ 20%]  (Warmup) 
+Chain 2 Iteration: 200 / 1000 [ 20%]  (Warmup) 
+Chain 4 Iteration: 200 / 1000 [ 20%]  (Warmup) 
+Chain 3 Iteration: 200 / 1000 [ 20%]  (Warmup) 
+Chain 1 Iteration: 300 / 1000 [ 30%]  (Warmup) 
+Chain 2 Iteration: 300 / 1000 [ 30%]  (Warmup) 
+Chain 4 Iteration: 300 / 1000 [ 30%]  (Warmup) 
+Chain 3 Iteration: 300 / 1000 [ 30%]  (Warmup) 
+Chain 1 Iteration: 400 / 1000 [ 40%]  (Warmup) 
+Chain 2 Iteration: 400 / 1000 [ 40%]  (Warmup) 
+Chain 4 Iteration: 400 / 1000 [ 40%]  (Warmup) 
+Chain 3 Iteration: 400 / 1000 [ 40%]  (Warmup) 
+Chain 1 Iteration: 500 / 1000 [ 50%]  (Warmup) 
+Chain 1 Iteration: 501 / 1000 [ 50%]  (Sampling) 
+Chain 2 Iteration: 500 / 1000 [ 50%]  (Warmup) 
+Chain 2 Iteration: 501 / 1000 [ 50%]  (Sampling) 
+Chain 4 Iteration: 500 / 1000 [ 50%]  (Warmup) 
+Chain 4 Iteration: 501 / 1000 [ 50%]  (Sampling) 
+Chain 3 Iteration: 500 / 1000 [ 50%]  (Warmup) 
+Chain 3 Iteration: 501 / 1000 [ 50%]  (Sampling) 

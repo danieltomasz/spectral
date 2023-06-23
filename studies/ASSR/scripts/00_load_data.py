@@ -56,12 +56,17 @@ def process_sub_session( data_folder: str, sub: str, time: np.ndarray, session: 
     """
     Process all trials for a given subject and return a xarray DataArrays"""
     list_of_trials = []
-    pattern = f"*{sub}_{session}*.mat"
-    trials = Path(data_folder).glob(pattern)
-    for trial in trials:
-        assert trial.exists(), f"File {trial} does not exist"
-        single_trial = process_trial(trial, time, sub, session)
-        list_of_trials.append(single_trial.compute())
+    pattern = f"**/*{sub}_{session}*.mat"
+    trials = list(Path(data_folder).glob(pattern))
+    if trials:
+        for trial in trials:
+            assert trial.exists(), f"File {trial} does not exist"
+            single_trial = process_trial(trial, time, sub, session)
+            list_of_trials.append(single_trial.compute())
+    try:
+        assert len(list_of_trials ) > 0, "your error message here"
+    except IndexError:
+        print("Exception raised")
     return xr.combine_by_coords(list_of_trials )
 
 def process_subjects(data_folder :str, subjects: np.ndarray, time : np.ndarray, sessions: List[str], output_folder :str):
@@ -71,10 +76,12 @@ def process_subjects(data_folder :str, subjects: np.ndarray, time : np.ndarray, 
     for sub in tqdm(subjects):
         for single_session in sessions:
             print(f"Processing {sub} {single_session}")
-            data_subject_session =  process_sub_session(data_folder, sub, time, single_session)
-            Path(output_folder).mkdir(parents=True, exist_ok=True)
-            data_subject_session.to_netcdf(f"{output_folder}/{sub}_{single_session}_times.nc")
-
+            try:
+                data_subject_session =  process_sub_session(data_folder, sub, time, single_session)
+                Path(output_folder).mkdir(parents=True, exist_ok=True)
+                data_subject_session.to_netcdf(f"{output_folder}/{sub}_{single_session}_times.nc")
+            except AssertionError:
+                print(f"Subject {sub} session {single_session} not found")
 
 base_folder = "/Volumes/ExtremePro/Analyses/tDCS_MEG/"
 
@@ -90,6 +97,15 @@ data_folder_aspo = f'{base_folder}/raw/brainstorm/ASPO/'
 output_folder_aspo = f'{base_folder}/interim/timeseries/aspo/'
 subjects_aspo = [f"S{str(i).zfill(3)}" for i in range(1, 16)]
 
+atlas = "Destrieux"
+mode = "assr"
+time_assr = time = np.linspace(-2, 2, 2401)
+sessions_assr = ["A", "B"]
+data_folder_assr_destrieux= f'{base_folder}/{atlas}/brainstorm/{mode}/'
+output_folder_assr_destrieux = f'{base_folder}/{atlas}/timeseries/{mode}/'
+subjects_assr = [f"Subject{str(i).zfill(2)}" for i in range(1, 16)]
+
 if __name__ == "__main__":
-    process_subjects(data_folder_assr, subjects_assr, time_assr, sessions_assr, output_folder_assr)
-    process_subjects(data_folder_aspo, subjects_aspo, time_aspo, sessions_aspo, output_folder_aspo)
+#    process_subjects(data_folder_assr, subjects_assr, time_assr, sessions_assr, output_folder_assr)
+#    process_subjects(data_folder_aspo, subjects_aspo, time_aspo, sessions_aspo, output_folder_aspo)
+    process_subjects(data_folder_assr_destrieux,  subjects_assr,  time_assr, sessions_assr,  output_folder_assr_destrieux)

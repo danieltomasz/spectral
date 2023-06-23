@@ -1,0 +1,22 @@
+name: hddm_test
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+  - python=3.8
+  - numpy
+  - scipy
+  - cython
+  - patsy
+  - seaborn
+  - statsmodels
+  - tqdm 
+  - scikit-learn
+  - pandas
+  - cloudpickle
+  - arviz
+  - matplotlib
+  - pip:
+    - pip install --use-pep517  pyMC 
+    - git+https://github.com/hddm-devs/kabuki
+    - git+https://github.com/hddm-devs/hddm.git

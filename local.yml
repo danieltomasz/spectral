@@ -3,7 +3,7 @@ channels:
     - conda-forge
     - bioconda
 dependencies:
-  - python=3.10.12
+  - python=3.10.11
   - blas=*=accelerate
   - numpy
   - pandas
@@ -32,5 +32,6 @@ dependencies:
     - git+https://github.com/danieltomasz/python-ggseg.git
     - git+https://github.com/pyxnat/pyxnat.git@bbrc
     - jupyter_ai
+    - iplantuml
 
 
