@@ -1,11 +1,7 @@
-# poirot is a package for working with the specparam package 
+# Spectral
 
-poirot is also a reference to the belgian detective from agata christie books.
+Spectral is a local python package that contains the spectral analysis tools for the project. The package can be installed by running the following command in the terminal:
 
-### For installing the python library that will work with reticulate
-
+```bash
+pip install -e .
 ```
-CONFIGURE_OPTS=--enable-shared pyenv install 3.11.1
-```
-
-
