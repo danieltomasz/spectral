@@ -1,0 +1,10 @@
+# Syntax: gitignore rules
+
+# Ignore files and directories for all sections from gitignore file
+# Default: True
+gitignore-import-and-ignore: True
+
+ignore-tree-and-content:
+  - "*.ipynb"
+  - ".repo-to-text-settings.yaml"
+  - "*.txt"

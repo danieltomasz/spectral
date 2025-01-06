@@ -1,0 +1,17 @@
+mne
+specparam>=2.0.0rc1
+numpy
+pandas
+seaborn
+mne_bids
+matplotlib
+geopandas
+
+[test]
+pytest
+pytest-watcher
+pytest-mock
+pytest-notebook
+nbval
+pre-commit
+nbstripout

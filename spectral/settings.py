@@ -69,9 +69,11 @@ def find_project_root(start_path: Union[str, Path] = None) -> Path:
 
 
 def load_settings(
-    filename: str = "settings.toml", root_dir: Union[str, Path] = None
+    filename: str = "settings.toml", 
+    root_dir: Union[str, Path] = None, 
+    verbose: bool = False
 ) -> Settings:
-    """Load settings from a file and return a Settings object."""
+    """Load settings from a file, return a Settings object, and optionally print details."""
     if root_dir is None:
         root_dir = find_project_root()
     settings_path = Path(root_dir) / filename
@@ -99,19 +101,22 @@ def load_settings(
     else:
         raise ValueError(f"Unsupported file format: {file_format}")
 
+    if verbose:
+        print(f"Settings file loaded from: {settings_path}")
+        print("Loaded settings:")
+        print(settings_dict)
+
     return Settings(settings_dict)
 
-
-# Usage example
 if __name__ == "__main__":
     try:
-        settings = load_settings()
-        print("Settings loaded successfully:")
+        # Load settings with verbose output
+        settings = load_settings(verbose=True)
 
-        # Accessing values (assuming a structure similar to the TOML example)
-        print(f"Project name: {settings.project.name}")
+        # Accessing values
+        print(f"Project root: {settings.get('paths.project_root')}")
         print(f"Analysis method: {settings.get('analysis.method')}")
-        print(f"Data path: {settings.get_path('paths.data')}")
+        print(f"Raw Data Path: {settings.get_path('paths.raw_dir')}")
 
         # Using default values
         print(f"Unknown setting: {settings.get('unknown.setting', 'default_value')}")

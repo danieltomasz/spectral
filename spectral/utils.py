@@ -2,6 +2,8 @@
 Includes utility functions for the project.
 """
 
+import contextlib
+from datetime import datetime
 import sys
 import os
 import io
@@ -79,6 +81,40 @@ def suppress_stdout():
                 raise
 
 
+@contextlib.contextmanager
+def capture_output_to_file(log_file_name=None):
+    """
+    Context manager to capture stdout and stderr and write them to a log file.
+
+    Args:
+        log_file_name (str): Optional custom name for the log file. Defaults to 'log_<timestamp>.txt'.
+
+    Yields:
+        tuple: (stdout_buffer, stderr_buffer)
+            stdout_buffer: io.StringIO object capturing stdout.
+            stderr_buffer: io.StringIO object capturing stderr.
+    """
+    if log_file_name is None:
+        # Generate default log file name with timestamp
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_file_name = f"log_{timestamp}.txt"
+
+    stdout_capture = io.StringIO()
+    stderr_capture = io.StringIO()
+
+    with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
+        try:
+            # Yield the buffers for capturing
+            yield stdout_capture, stderr_capture
+        finally:
+            # Append captured output to the log file
+            with open(log_file_name, "a") as log_file:
+                log_file.write("Captured stdout:\n")
+                log_file.write(stdout_capture.getvalue())
+                log_file.write("\nCaptured stderr:\n")
+                log_file.write(stderr_capture.getvalue())
+                log_file.write("\n")
+
 @contextmanager
 def empty_folder_check(folder):
     """
@@ -143,3 +179,6 @@ def debug_print(*variables_to_print):
         return wrapper
 
     return decorator
+
+
+

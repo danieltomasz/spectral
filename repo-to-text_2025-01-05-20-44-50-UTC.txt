@@ -1,0 +1,2549 @@
+Directory: spectral
+
+Directory Structure:
+```
+.
+├── .gitignore
+├── .python-version
+├── LICENSE
+├── Makefile
+├── README.md
+├── _quarto.yml
+├── contests.py
+│   ├── docs/brain_plot_rs.png
+├── local.yml
+├── pyproject.toml
+│   ├── spectral/__init__.py
+│   ├── spectral/analysis.py
+│   ├── spectral/bayesian_helpers.py
+│   ├── spectral/brain_atlas.py
+│   ├── spectral/dataio.py
+│   ├── spectral/itpc.py
+│   ├── spectral/plotpsd.py
+│   ├── spectral/preprocess_assr.py
+│   ├── spectral/preprocess_rs.py
+│   ├── spectral/settings.py
+│   ├── spectral/simulation.py
+│   ├── spectral/spectral.py
+│   ├── spectral/utils.py
+│   └── spectral/visualization.py
+│   ├── spectral.egg-info/PKG-INFO
+├── test.yml
+    ├── tests/test_brain_atlas.py
+    ├── tests/test_simulations.py
+    ├── tests/test_spectrum.py
+    ├── tests/test_utils.py
+    └── tests/test_visualize.py
+```
+
+Contents of _quarto.yml:
+```
+project:
+  output-dir: _output
+```
+
+Contents of LICENSE:
+```
+The MIT License (MIT)
+
+Copyright (c) 2023 Daniel Borek
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+```
+
+Contents of Makefile:
+```
+.ONESHELL:
+
+.PHONY: install
+
+PROJECT?=poirot
+VERSION?=3.11.4
+VENV=${PROJECT}-${VERSION}
+VENV_DIR=$(shell pyenv root)/versions/${VENV}
+PYTHON=${VENV_DIR}/bin/python
+JUPYTER_ENV_NAME=${VENV}
+GLOBAL=
+INLCUDE_CPATH=/opt/homebrew/include/
+INCLUDE_HDF5_DIR=/opt/homebrew/opt/hdf5/1.12.2_2
+
+CVERSION?=3.10
+CVENV?=conda-${PROJECT}-${CVERSION}
+CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ;  conda activate
+
+
+install:
+	@echo "Installing $(VENV)"
+	env PYTHON_CONFIGURE_OPTS=--enable-shared pyenv virtualenv ${VERSION} ${VENV}
+	pyenv local ${VENV}
+	$(PYTHON) -m pip  install -U pip setuptools wheel flit
+	export CPATH=${CPATH}:${INLCUDE_CPATH}; export HDF5_DIR=${HDF5_DIR}:${INCLUDE_HDF5_DIR}; $(PYTHON) -m pip install h5py --no-cache-dir
+	export HDF5_DIR=/opt/homebrew/opt/hdf5; export BLOSC_DIR=/opt/homebrew/opt/c-blos ; $(PYTHON) -m pip install tables
+	$(PYTHON) -m pip install  -r requirements.txt
+	$(PYTHON) -m pip install -U git+https://github.com/fooof-tools/fooof.git
+	$(PYTHON) -m pip install -U git+https://github.com/pyxnat/pyxnat.git@bbrc
+	$(PYTHON) -m pip install -U git+https://github.com/danieltomasz/python-ggseg.git
+	$(PYTHON) -m flit install --symlink --deps none
+	$(PYTHON) -m PYDEVD_DISABLE_FILE_VALIDATION=1 ipykernel install --user --name ${VENV}
+
+update:
+	$(PYTHON) -m pip install --upgrade -r requirements.txt --upgrade-strategy=eager
+	$(PYTHON) -m pip install -U git+https://github.com/fooof-tools/fooof.git
+purge:
+	$(PYTHON) -m pip cache purge
+
+kernel:
+	$(PYTHON) -m PYDEVD_DISABLE_FILE_VALIDATION=1 ipykernel install --user --name ${VENV}
+
+uninstall:
+	@echo "Removing $(VENV)"
+	-jupyter kernelspec uninstall ${VENV}
+	-pyenv uninstall ${VENV}
+	-rm .python-version
+	-rm -r /Users/daniel/Library/Jupyter/kernels/${VENV}
+
+
+outdated:
+	pyenv local ${VENV}
+	$(PYTHON) -m pip list --outdated
+
+kernels:
+	jupyter kernelspec list
+
+conda-activate:
+	$(CONDA_ACTIVATE) ${CVENV}
+
+conda-install:
+	conda env create --name ${CVENV} --file local.yml 
+	$(CONDA_ACTIVATE) ${CVENV}; flit install --env --symlink --deps none
+	$(CONDA_ACTIVATE) ${CVENV};pip uninstall grpcio; conda install grpcio 
+	$(CONDA_ACTIVATE) ${CVENV}; ipython kernel install --user --name=${CVENV}
+
+conda-update:
+	conda clean --all
+	conda update -n base -c conda-forge conda
+	$(CONDA_ACTIVATE) ${CVENV};  conda env update --name ${CVENV} --file local.yml --prune
+
+conda-info:
+	$(CONDA_ACTIVATE) ${CVENV}; conda search --outdated
+
+conda-remove:
+	conda env remove --name ${CVENV} 
+
+conda-reinstall: conda-remove conda-install
+
+conda-list:
+	conda list -n ${CVENV}
+
+
+spyder:
+	$(CONDA_ACTIVATE) ${CVENV}; spyder
+
+conda-ai:
+	conda create --name jupyter-ai --channel conda-forge   python==3.10.11  jupyterlab 
+	conda activate jupyter-ai; pip install  jupyter_ai;pip uninstall grpcio; conda install grpcio; 
+	conda activate jupyter-ai; ipython kernel install --user --name=jupyter-ai
+
+```
+
+Contents of test.yml:
+```
+name: hddm_test
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+  - python=3.8
+  - numpy
+  - scipy
+  - cython
+  - patsy
+  - seaborn
+  - statsmodels
+  - tqdm 
+  - scikit-learn
+  - pandas
+  - cloudpickle
+  - arviz
+  - matplotlib
+  - pip:
+    - pip install --use-pep517  pyMC 
+    - git+https://github.com/hddm-devs/kabuki
+    - git+https://github.com/hddm-devs/hddm.git
+```
+
+Contents of pyproject.toml:
+```
+[build-system]
+requires = ["setuptools>=61",  "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectral"
+authors = [{ name = "Daniel Borek", email = "daniel.borek@ugent.be" }]
+readme = "README.md"
+version = "0.0.1.dev0"
+description = "Project for working with electrophysiological data"
+license = { file = "LICENSE" }
+classifiers = ["License :: OSI Approved :: MIT License"]
+
+requires-python = ">=3.10"
+
+dependencies = [
+    "mne",
+    "specparam>=2.0.0rc1",
+    "numpy",
+    "pandas",
+    "seaborn",
+    "mne_bids",
+    "matplotlib",
+    "geopandas"
+]
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-watcher",
+    "pytest-mock",
+    "pytest-notebook",
+    "nbval",
+    "pre-commit",
+    "nbstripout"
+
+]
+
+[tool.setuptools.packages.find]
+include = ["spectral*"]
+namespaces = false
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "."
+]
+addopts = "-v"
+testpaths = ["docs"]
+
+
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311']
+include = '\.pyi?$'
+
+# iSort
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+
+
+[tool.flake8]
+ignore = ['E231', 'E241']
+per-file-ignores = [
+    '__init__.py:F401',
+]
+max-line-length = 88
+count = true
+
+
+[tool.pytest-watcher]
+now = false
+delay = 1.0
+runner = "pytest"
+patterns = ["*.ipynb"]
+ignore_patterns = []
+```
+
+Contents of local.yml:
+```
+name: conda-poirot-3.10
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+  - python=3.10.11
+  - blas=*=accelerate
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - seaborn
+  - h5py
+  - tqdm
+  - statsmodels
+  - neurodsp
+  - netcdf4
+  - pytables
+  - xarray
+  - h5netcdf
+  - scikit-learn
+  - ipykernel
+  - spyder
+  - spyder-notebook
+  - flit
+  - python-dotenv
+  - mne>=1.4
+  - pip
+  - snakemake
+  - pip:
+    - git+https://github.com/fooof-tools/fooof.git
+    - git+https://github.com/danieltomasz/python-ggseg.git
+    - git+https://github.com/pyxnat/pyxnat.git@bbrc
+    - jupyter_ai
+    - iplantuml
+
+
+
+```
+
+Contents of README.md:
+```
+# Spectral
+
+Spectral is a local python package that contains the spectral analysis tools for the project. The package can be installed by running the following command in the terminal:
+
+```bash
+pip install -e .
+```
+```
+
+Contents of contests.py:
+```
+"""configure pytest for notebook testing:"""
+
+import pytest
+
+
+def pytest_collect_file(parent, path):
+    """Collect IPython notebooks for testing."""
+    if path.ext == ".ipynb":
+        return pytest.File.from_parent(parent, path=path)
+
+```
+
+Contents of .python-version:
+```
+poirot-3.11.4
+
+```
+
+Contents of spectral.egg-info/PKG-INFO:
+```
+Metadata-Version: 2.1
+Name: spectral
+Version: 0.0.1.dev0
+Summary: Project for working with electrophysiological data
+Author-email: Daniel Borek <daniel.borek@ugent.be>
+License: The MIT License (MIT)
+        
+        Copyright (c) 2023 Daniel Borek
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in
+        all copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+        THE SOFTWARE.
+        
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: mne
+Requires-Dist: specparam>=2.0.0rc1
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: seaborn
+Requires-Dist: mne_bids
+Requires-Dist: matplotlib
+Requires-Dist: geopandas
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Requires-Dist: pytest-watcher; extra == "test"
+Requires-Dist: pytest-mock; extra == "test"
+Requires-Dist: pytest-notebook; extra == "test"
+Requires-Dist: nbval; extra == "test"
+Requires-Dist: pre-commit; extra == "test"
+Requires-Dist: nbstripout; extra == "test"
+
+# Spectral
+
+Spectral is a local python package that contains the spectral analysis tools for the project. The package can be installed by running the following command in the terminal:
+
+```bash
+pip install -e .
+```
+
+```
+
+Contents of tests/test_utils.py:
+```
+# %%
+import poirot
+import importlib
+importlib.reload(poirot)
+from poirot.utils import generate_example_spectra
+
+def test_generate_example_spectra():
+    generate_example_spectra()
+    assert True
+# %%
+if __name__ == '__main__':
+    freqs, powers, sim_params = generate_example_spectra()
+    assert True
+# %%
+
+```
+
+Contents of tests/test_simulations.py:
+```
+"""Tests for the brain_atlas module."""
+
+import pytest
+from spectral.simulate import simulate_signal
+
+def test_signal_generation():
+    assert 1==1
+```
+
+Contents of tests/test_brain_atlas.py:
+```
+"""Tests for the brain_atlas module."""
+
+import pytest
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from spectral.brain_atlas import (
+    dk_atlas,
+    plot_brain,
+)  # Replace 'your_module' with the actual module name
+
+
+@pytest.fixture
+def atlas():
+    """Return the Desikan-Killiany brain atlas."""
+    return dk_atlas()
+
+
+def test_dk_atlas(atlas):
+    """Test the dk_atlas function."""
+    assert isinstance(atlas, gpd.GeoDataFrame)
+    expected_columns = ["label", "side", "hemi", "geometry"]
+    assert all(col in atlas.columns for col in expected_columns)
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+def test_plot_brain_basic(atlas, theme, mocker):
+    """Test the themes of the plot_brain function."""
+    fig = plot_brain(atlas, theme=theme)
+    assert isinstance(fig, plt.Figure)
+    if theme == "dark":
+        assert plt.rcParams["axes.facecolor"] == "black"
+    else:
+        assert plt.rcParams["axes.facecolor"] == "white"
+    plt.close(fig)
+
+
+def test_plot_brain_with_data(atlas):
+    """Test the plot_brain function with data."""
+    data_df = pd.DataFrame({"roi": atlas["label"], "value": range(len(atlas))})
+    fig = plot_brain(atlas, data_df=data_df, value_column="value")
+
+    # Verify figure was created
+    assert isinstance(fig, plt.Figure)
+
+    # Verify we have 4 subplots + colorbar (5 axes total)
+    assert len(fig.axes) == 5
+
+    # Verify colorbar exists and has data
+    colorbar_ax = fig.axes[-1]
+    # Get the colorbar label using get_ylabel instead
+    assert colorbar_ax.get_ylabel().strip() == "value"
+    # Alternative checks we could add:
+    # assert colorbar_ax.collections  # Check if colorbar has collections
+    # assert colorbar_ax.get_ylabel() != ""  # Check if label exists
+
+    plt.close(fig)
+
+
+def test_plot_brain_save(atlas, tmp_path):
+    """Test saving the plot."""
+    save_path = tmp_path / "test_plot.png"
+    fig = plot_brain(atlas)
+    fig.savefig(str(save_path), bbox_inches="tight", dpi=300)
+    assert save_path.exists()  # Verify file was created
+    assert save_path.is_file()
+
+    plt.close(fig)
+
+
+def test_plot_brain_missing_data(atlas):
+    """Test plotting with incomplete data."""
+    data_df = pd.DataFrame(
+        {
+            "roi": atlas["label"][: len(atlas) // 2],  # Only half of the labels
+            "value": range(len(atlas) // 2),
+        }
+    )
+    fig = plot_brain(atlas, data_df=data_df, value_column="value")
+    assert isinstance(fig, plt.Figure)
+    # Verify we have 4 subplots + colorbar
+    assert len(fig.axes) == 5
+    # Verify colorbar
+    colorbar_ax = fig.axes[-1]
+    assert colorbar_ax.get_ylabel().strip() == "value"
+
+    plt.close(fig)
+
+
+def test_plot_brain_custom_cmap(atlas):
+    """Test plotting with custom colormap."""
+    fig = plot_brain(atlas, cmap="coolwarm")
+
+    # Verify figure was created
+    assert isinstance(fig, plt.Figure)
+
+    # Verify we have 4 subplots (no colorbar without data)
+    assert len(fig.axes) == 4
+
+    plt.close(fig)
+
+```
+
+Contents of tests/test_visualize.py:
+```
+# %%
+from pathlib import Path
+import pytest
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+import poirot
+from poirot.utils import reload_package
+
+reload_package(poirot)
+
+# %%
+
+def test_plot_lines():
+    # Get frequency axis (x-axis)
+    taps = {
+        "offset": [-16.237085, -15.772295],
+        "exponent": [1.18727834, 2.367788],
+        "condition": ["OLD", "YOUNG"],
+        "subjectID": ["sub-032528", "sub-032448"],
+    }
+    aps = pd.DataFrame(taps)
+    final_list = poirot.visualize.create_slope_from_parameters(
+        aps, ["condition", "subjectID"]
+    )
+
+    poirot.visualize.plot_lines(final_list)
+
+def test_plot_group_lines():
+    # Get frequency axis (x-axis)
+    taps = {
+        "offset": [-16.237085, -15.772295, -16.23885],
+        "exponent": [1.18727834, 2.367788, 1.996912],
+        "Y_OH_OL": ["O_H", "O_L", "Y_H" ],
+    }
+    aps = pd.DataFrame(taps)
+    final_list = poirot.visualize.create_slope_from_parameters(
+        aps, ["Y_OH_OL"]
+    )
+
+    poirot.visualize.plot_group_lines(final_list, condition = "Y_OH_OL")
+    assert True
+
+
+# %%
+if __name__ == '__main__':
+    test_plot_group_lines()
+# %%
+
+```
+
+Contents of tests/test_spectrum.py:
+```
+import pytest
+import pandas as pd
+from fooof import FOOOFGroup
+
+from poirot.spectrum import psd_fooof, fooof2pandas
+from poirot.utils import generate_example_spectra
+
+def fooof2pandas_shape() ->  tuple:
+    freqs, spectra, sim_params = generate_example_spectra()
+    fparams =  FOOOFGroup(
+        peak_width_limits=[2, 12],
+        min_peak_height=0.1,
+        max_n_peaks=6,
+        aperiodic_mode="fixed",
+    )
+    fg = psd_fooof(freqs, spectra, fparams)
+    df = fooof2pandas(fg)
+    return df.shape
+
+def test_fooof2pandas():
+    returned_shape = fooof2pandas_shape()
+    assert returned_shape[1] == 8
+
+#%%
+
+```
+
+Contents of docs/brain_plot_rs.png:
+```
+[Could not decode file contents]
+
+```
+
+Contents of spectral/simulation.py:
+```
+"""functions to create simulation"""
+
+from typing import Callable, List, Optional, Any
+import numpy as np
+import neurodsp
+import mne
+import neurodsp.sim
+from typing import Optional, Union, Dict, List, Tuple
+import numpy as np
+from neurodsp.sim import sim_powerlaw
+
+SimulationFunc = Callable[..., np.ndarray]
+
+
+def default_simulation(
+    n_seconds: int, fs: int, n_epochs: int, exponent: float
+) -> np.ndarray:
+    """Default 1/f noise simulation function"""
+    n_points = int(n_seconds * fs)
+    epochs_data = np.zeros((n_epochs, n_points))
+    for i in range(n_epochs):
+        signal = neurodsp.sim.sim_powerlaw(n_seconds, fs, exponent)
+        epochs_data[i, :] = signal
+    return epochs_data
+
+
+def generate_ssep(
+    t: np.ndarray,
+    f: float,
+    H: int,
+    amplitudes: np.ndarray,
+    phases: np.ndarray,
+    window: bool = True,
+) -> Tuple[np.ndarray, List[np.ndarray]]:
+    """
+    Generate Steady State Evoked Potentials signal.
+
+    Parameters:
+    -----------
+    t : np.ndarray
+        Time points
+    f : float
+        Fundamental frequency
+    H : int
+        Number of harmonics
+    amplitudes : np.ndarray
+        Array of amplitudes (a_h^k) for each harmonic
+    phases : np.ndarray
+        Array of phases (φ_h^k) for each harmonic
+    window : bool, optional
+        Apply Hanning window to signal (default=True)
+
+    Returns:
+    --------
+    s_k : np.ndarray
+        The generated SSEP signal
+    harmonics : list
+        List of individual harmonic components
+    """
+    if len(amplitudes) != H or len(phases) != H:
+        raise ValueError(
+            "Length of amplitudes and phases must match the number of harmonics H"
+        )
+
+    s_k = np.zeros_like(t, dtype=float)
+    harmonics = []
+
+    # Calculate the sum of harmonics
+    for h in range(H):
+        h_idx = h + 1  # harmonic index (1-based)
+        # Calculate individual harmonic
+        harmonic = amplitudes[h] * np.cos(2 * np.pi * h_idx * f * t + phases[h])
+        harmonics.append(harmonic)
+        # Add to total signal
+        s_k += harmonic
+
+    if window:
+        window_func = np.hanning(len(s_k))
+        s_k *= window_func
+
+    return s_k, harmonics
+
+
+def normalize_signal(signal: np.ndarray, fs: int) -> np.ndarray:
+    """Normalize signal to have similar total power."""
+    psd, freqs = mne.time_frequency.psd_array_welch(signal, sfreq=fs, fmin=0, fmax=fs/2, n_fft=fs)
+    total_power = np.sum(psd)
+    return signal / np.sqrt(total_power)
+
+
+def simulate_ssep(
+    n_seconds: int,
+    fs: int,
+    n_epochs: int,
+    exponent: float,
+    ssep_params: Optional[Dict] = None,
+    add_powerlaw: bool = True,
+    normalize: bool = False,
+) -> np.ndarray:
+    """
+    Simulate epochs with SSEP signal, optionally combined with 1/f noise.
+
+    Parameters
+    ----------
+    n_seconds : int
+        Duration of each epoch in seconds
+    fs : int
+        Sampling frequency
+    n_epochs : int
+        Number of epochs to generate
+    exponent : float
+        Exponent for 1/f noise (only used if add_powerlaw=True)
+    ssep_params : dict, optional
+        Dictionary with SSEP parameters:
+        - freq : float, fundamental frequency
+        - n_harmonics : int, number of harmonics
+        - amplitudes : array-like, amplitudes for each harmonic
+        - phases : array-like, phases for each harmonic
+        - scale : float, scaling factor for SSEP signal
+    add_powerlaw : bool, optional
+        Whether to add 1/f noise to the SSEP signal (default=True)
+    normalize : bool, optional
+        Whether to normalize the 1/f noise (default=False)
+
+    Returns
+    -------
+    epochs_data : np.ndarray
+        Array of simulated epochs (n_epochs × n_timepoints)
+    """
+    # Default SSEP parameters
+    default_params = {
+        "freq": 40,
+        "n_harmonics": 3,
+        "amplitudes": [1.0, 0.5, 0.25],
+        "phases": [0, np.pi / 4, np.pi / 2],
+        "scale": 0.3,
+    }
+    ssep_params = ssep_params or default_params
+
+    n_points = int(n_seconds * fs)
+    t = np.linspace(0, n_seconds, n_points)
+    epochs_data = np.zeros((n_epochs, n_points))
+
+    for i in range(n_epochs):
+        # Generate SSEP signal
+        ssep_signal, _ = generate_ssep(
+            t,
+            ssep_params["freq"],
+            ssep_params["n_harmonics"],
+            ssep_params["amplitudes"],
+            ssep_params["phases"],
+        )
+
+        if add_powerlaw:
+            # Generate 1/f noise
+            noise = sim_powerlaw(n_seconds, fs, exponent)
+            if normalize:
+                noise = normalize_signal(noise, fs)
+            # Combine signals
+            signal = noise + ssep_params["scale"] * ssep_signal
+        else:
+            signal = ssep_params["scale"] * ssep_signal
+
+        epochs_data[i, :] = signal
+
+    return epochs_data
+
+
+def simulate_signal_with_peaks(
+    n_seconds: int,
+    fs: int,
+    n_epochs: int,
+    exponent: float,
+    peak_params: dict = None,
+    normalize: bool = False,
+) -> np.ndarray:
+    """
+    Simulate epochs with 1/f noise and oscillatory peaks.
+
+    Parameters
+    ----------
+    n_seconds : int
+        Duration of each epoch in seconds
+    fs : int
+        Sampling frequency
+    n_epochs : int
+        Number of epochs to generate
+    exponent : float
+        Exponent for 1/f noise
+    peak_params : dict, optional
+        Dictionary with peak parameters:
+        - freq : float, oscillation frequency
+        - bw : float, bandwidth
+        - height : float, peak height
+    normalize : bool, optional
+        Whether to normalize the 1/f noise (default=False)
+    """
+    # Default peak parameters
+    default_peaks = {"freq": 10, "bw": 3, "height": 2}
+    peak_params = peak_params or default_peaks
+
+    n_points = int(n_seconds * fs)
+    epochs_data = np.zeros((n_epochs, n_points))
+
+    for i in range(n_epochs):
+        # Generate aperiodic component
+        ap_sig = neurodsp.sim.sim_powerlaw(n_seconds, fs, exponent)
+        if normalize:
+            ap_sig = normalize_signal(ap_sig, fs)
+
+        # Add oscillatory peak
+        sig = neurodsp.sim.sim_peak_oscillation(
+            ap_sig,
+            fs,
+            peak_params["freq"],
+            peak_params["bw"],
+            peak_params["height"],
+        )
+        epochs_data[i, :] = sig
+
+    return epochs_data
+
+
+def create_simulated_epochs(
+    labels: List[str],
+    simulation_func: SimulationFunc = default_simulation,
+    n_seconds: int = 1,
+    fs: int = 1000,
+    n_epochs: int = 100,
+    exponent: float = -2,
+    filter_freq: Optional[float] = 125,
+    resample_freq: Optional[int] = 250,
+    **kwargs
+) -> mne.Epochs:
+    """
+    Create simulated EEG epochs using a provided simulation function.
+    """
+    # Simulate epochs for each label
+    simulated_data = {}
+    for label in labels:
+        simulated_data[label] = simulation_func(
+            n_seconds, fs, n_epochs, exponent, **kwargs
+        )
+
+    # Combine data into single array
+    combined_data = np.stack(
+        [simulated_data[label] for label in labels], axis=1
+    )
+
+    # Create MNE info and events
+    info = mne.create_info(
+        ch_names=labels, sfreq=fs, ch_types=["misc"] * len(labels)
+    )
+    events = np.array([[i, 0, 1] for i in range(n_epochs)])
+
+    # Create and process epochs
+    epochs = mne.EpochsArray(combined_data, info, events)
+
+    if filter_freq:
+        epochs = epochs.filter(l_freq=None, picks="misc", h_freq=filter_freq)
+    if resample_freq and resample_freq != fs:
+        epochs = epochs.resample(sfreq=resample_freq)
+
+    return epochs
+
+```
+
+Contents of spectral/dataio.py:
+```
+"""This is used to preprocess the ASSR part of the data"""
+
+import os
+import sys
+import pathlib
+import scipy.io as sio
+import numpy as np
+import mne
+
+from .utils import suppress_stdout
+
+
+def get_trials_in_session(raw_data_dir, pattern):
+    """Get trial files satisfying specyfic pattern."""
+    # if not (trials := list(pathlib.Path(raw_data_dir).glob(pattern))):
+    #     raise FileNotFoundError(f"No trial files found with pattern: {pattern}")
+    print(f"Searching for trials with pattern: {pattern}")
+    try:
+        trials = list(pathlib.Path(raw_data_dir).glob(pattern))
+    except Exception as e:
+        print(f"Error: {str(e)} with pattern: {pattern}")
+        trials = []
+    return trials
+
+
+def create_raw(trial, times=[-2, 2, 2401], sfreq=600):
+    """Create MNE Raw object from a MATLAB file."""
+
+    def extract_from_mstruct(matlab_struct: dict, key: str) -> np.array:
+        item_list = matlab_struct["Atlas"][0, 0]["Scouts"][key].ravel().tolist()
+        return np.array([item.item() for item in item_list])
+
+    times = np.linspace(*times)
+    struct = sio.loadmat(trial)
+    labels = extract_from_mstruct(struct, "Label")
+    regions = extract_from_mstruct(struct, "Region")
+    data = struct["Value"]
+    ch_names = labels.tolist()
+    ch_types = ["misc"] * len(ch_names)
+    info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
+    return mne.io.RawArray(data, info)
+
+
+def create_epochs(trials):
+    raw_trials = []
+    with suppress_stdout():
+        for trial in trials:
+            raw = create_raw(trial)
+            raw_trials.append(raw)
+    datas = [r.get_data() for r in raw_trials]
+
+    info = raw_trials[0].info
+    return mne.EpochsArray(datas, info, tmin=-2.0)
+
+```
+
+Contents of spectral/analysis.py:
+```
+"""Functions to do the analysis of the data"""
+
+from typing import List, Optional, Any
+import numpy as np
+import pandas as pd
+import mne
+import matplotlib.pyplot as plt
+import seaborn as sns
+from specparam import SpectralGroupModel
+
+from .spectral import specparam2pandas
+from .simulation import create_simulated_epochs, SimulationFunc
+from .itpc import compute_itpc, ITPC, average_itpc
+
+
+def compute_psd_and_fit(
+    epochs: mne.Epochs, freq_range: list = None, peak_params: dict = None
+) -> tuple:
+    # Default frequency range
+    if freq_range is None:
+        freq_range = [2, 40]
+
+    # Default peak parameters
+    # Default peak parameters
+    default_peak_params = {
+        "peak_width_limits": [3, 8],
+        "min_peak_height": 0.2,
+        "max_n_peaks": 6,
+    }
+    peak_params = peak_params or default_peak_params
+
+    # Compute PSD
+    psd_results = epochs.compute_psd(
+        method="welch",
+        picks="misc",
+        fmin=1,
+        fmax=epochs.info["sfreq"] / 2,
+        n_fft=int(epochs.info["sfreq"]),
+        average="mean",
+    )
+    freqs = psd_results.freqs
+    psds = psd_results.get_data(picks="misc")
+    avg_psds = np.mean(psds, axis=0)
+
+    # Fit spectral model
+    fg = SpectralGroupModel(verbose=False, **peak_params)
+    fg.fit(freqs, avg_psds, n_jobs=-1, freq_range=freq_range)
+    exponents = fg.get_params("aperiodic_params", "exponent")
+    fits = specparam2pandas(fg)
+    return freqs, avg_psds, exponents, fits
+
+
+def simulate_and_compute_itpc(
+    labels: List[str],
+    simulation_func: SimulationFunc,
+    freqs: np.ndarray,
+    n_cycles: int,
+    n_seconds: int = 1,
+    fs: int = 1000,
+    n_epochs: int = 100,
+    exponent: float = -2,
+    filter_freq: Optional[float] = 125,
+    resample_freq: Optional[int] = 250,
+    **kwargs,
+) -> ITPC:
+    """
+    Simulate data using the provided simulation function and compute ITPC.
+    """
+    # Create simulated epochs
+    epochs = create_simulated_epochs(
+        labels,
+        simulation_func=simulation_func,
+        n_seconds=n_seconds,
+        fs=fs,
+        n_epochs=n_epochs,
+        exponent=exponent,
+        filter_freq=filter_freq,
+        resample_freq=resample_freq,
+        **kwargs,
+    )
+    # Compute ITPC
+    itpc = compute_itpc(epochs, freqs, n_cycles)
+    return itpc
+
+
+def plot_itpc_histogram(
+    itpc: ITPC, tmin_avg: float = 0.3, tmax_avg: float = 0.7, bins: int = 30
+) -> tuple:
+    """
+    Plot a histogram of averaged ITPC values with the mean value and return the averaged ITPC and plot object.
+    """
+    avg_itpc = average_itpc(itpc, tmin_avg=tmin_avg, tmax_avg=tmax_avg)
+    mean_itpc = np.mean(avg_itpc)
+
+    fig, ax = plt.subplots()
+    ax.hist(avg_itpc, bins=bins, alpha=0.75, color="blue", edgecolor="black")
+    ax.axvline(mean_itpc, color="red", linestyle="dashed", linewidth=1)
+    ax.set_title("Histogram of Averaged ITPC Values")
+    ax.set_xlabel("ITPC Value")
+    ax.set_ylabel("Frequency")
+    plt.show()
+
+    return avg_itpc, fig
+
+
+def plot_itpc_violinplot(
+    itpc: ITPC, tmin_avg: float = 0.3, tmax_avg: float = 0.7
+) -> tuple:
+    """
+    Plot a violin plot of averaged ITPC values showing the standard deviation and distribution of values.
+    """
+    avg_itpc = average_itpc(itpc, tmin_avg=tmin_avg, tmax_avg=tmax_avg)
+    mean_itpc = np.mean(avg_itpc)
+    std_itpc = np.std(avg_itpc)
+
+    fig, ax = plt.subplots()
+    sns.violinplot(data=avg_itpc, ax=ax, inner="point", scale="width")
+    ax.axhline(mean_itpc, color="red", linestyle="dashed", linewidth=1, label=f'Mean: {mean_itpc:.2f}')
+    ax.axhline(mean_itpc + std_itpc, color="green", linestyle="dashed", linewidth=1, label=f'Std Dev: {std_itpc:.2f}')
+    ax.axhline(mean_itpc - std_itpc, color="green", linestyle="dashed", linewidth=1)
+    ax.set_title("Violin Plot of Averaged ITPC Values")
+    ax.set_xlabel("ITPC Value")
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    return avg_itpc, fig
+
+```
+
+Contents of spectral/plotpsd.py:
+```
+import matplotlib.pyplot as plt
+import sys
+
+from .preprocess_assr import apply_window_and_pad
+from .utils import parse_key_value_pairs_from_filename
+
+
+def plot_psd_pre_post(epochs, metadata):
+    """
+    Computes and plots the Power Spectral Density (PSD) of EEG data before and after a specific event.
+
+    Parameters:
+    epochs (mne.Epochs): The EEG data segmented into epochs.
+    metadata (dict): A dictionary containing metadata about the subject and session.
+                    It should have keys 'sub' and 'ses' corresponding to subject ID and session ID.
+
+    The function creates two subplots: one for the PSD before the event (from -1 to 0 seconds)
+    and one for the PSD after the event (from 0 to 1 seconds). The PSD is computed using the
+    Welch method on the 'misc' channels, and the frequency range of interest is from 3.0 to 45 Hz.
+
+    The title of the figure includes the subject ID and session ID extracted from the metadata.
+    """
+    fig, axs = plt.subplots(1, 2, figsize=(18, 6))
+    fig.suptitle(
+        f"This is extracted values for sub-{metadata['sub']}_ses-{metadata['ses']}",
+        fontsize=16,
+    )
+    epochs.compute_psd(
+        method="welch", picks="misc", tmin=-1, tmax=0, fmin=3.0, fmax=45
+    ).plot(axes=axs[0], picks="misc")
+    epochs.compute_psd(
+        method="welch", picks="misc", tmin=0, tmax=1, fmin=3.0, fmax=45
+    ).plot(axes=axs[1], picks="misc")
+    return fig
+
+
+def plot_psd_padded_pre_post(epochs, metadata):
+    """Plot padded PSD for pre and post stimulus."""
+    times = [(-1, 0), (0, 1)]
+    conditions = ["prestim", "stim"]
+
+    fig, axs = plt.subplots(2, 2, figsize=(24, 9))
+    axs = axs.flatten()
+    fig.suptitle(
+        f"This is extracted values for sub-{metadata['sub']}_ses-{metadata['ses']}_run-{metadata['run']}",
+        fontsize=16,
+    )
+    for i, (time, condition) in enumerate(zip(times, conditions)):
+        print(2 * i)
+        epochs_temp = epochs.copy().crop(tmin=time[0], tmax=time[1])
+        epochs_padded = apply_window_and_pad(
+            epochs_temp,
+            desired_length_sec=2,
+            window_type="identity",
+            use_reverse_padding=False,
+        )
+        epochs_temp.compute_psd(method="welch", picks="misc", fmin=3.0, fmax=45).plot(
+            axes=axs[2 * i], picks="misc"
+        )
+        epochs_padded.compute_psd(method="welch", picks="misc", fmin=3.0, fmax=45).plot(
+            axes=axs[2 * i + 1], picks="misc"
+        )
+
+```
+
+Contents of spectral/preprocess_assr.py:
+```
+import mne
+import numpy as np
+from scipy.signal.windows import gaussian, tukey
+from scipy.stats import zscore
+
+
+def normalize_epochs_per_channel(epochs):
+    """
+    Applies z-score normalization per channel for each epoch.
+    """
+    normalized_data = []
+    for epoch in epochs.get_data(copy=True):
+        # Z-score normalization for each channel in the epoch
+        normalized_epoch = zscore(epoch, axis=1)
+        normalized_data.append(normalized_epoch)
+
+    # Creating a new EpochsArray with normalized data
+    return mne.EpochsArray(normalized_data, epochs.info, tmin=epochs.tmin)
+
+
+def apply_window_and_pad(
+    epochs,
+    desired_length_sec,
+    window_type="hamming",
+    use_reverse_padding=False,
+    alpha=0.1,
+):
+    """Pad epochs with a window function and zero-padding."""
+    sfreq = epochs.info["sfreq"]
+
+    # Check to ensure desired length is greater than current length
+    if (desired_length_samples := int(np.round(desired_length_sec * sfreq))) <= (
+        current_length_samples := epochs.get_data(copy=False).shape[2]
+    ):
+        raise ValueError(
+            "Desired length must be greater than the current length of the epochs."
+        )
+
+    new_data = []
+    for epoch in epochs.get_data(copy=True):
+        # Apply window
+        if window_type == "hamming":
+            window = np.hamming(current_length_samples)
+        elif window_type == "gaussian":
+            std = current_length_samples / 10  # Smaller std for a narrower window
+            window = gaussian(current_length_samples, std=std)
+        elif window_type == "tukey":
+            window = tukey(current_length_samples, alpha=alpha)
+        else:
+            window = np.ones(current_length_samples)
+
+        windowed_epoch = epoch * window[None, :]
+        # Padding
+        if use_reverse_padding:
+            reverse_data = np.flip(windowed_epoch, axis=1)
+            padding_length = (desired_length_samples - current_length_samples) // 2
+            padded_epoch = np.hstack(
+                (
+                    reverse_data[:, :padding_length],
+                    epoch,
+                    reverse_data[:, :padding_length],
+                )
+            )
+        else:
+            padding_length = (desired_length_samples - epoch.shape[1]) // 2
+            padded_epoch = np.pad(
+                epoch, ((0, 0), (padding_length, padding_length)), "constant"
+            )
+        new_data.append(padded_epoch)
+
+    return mne.EpochsArray(new_data, epochs.info, tmin=epochs.tmin)
+
+```
+
+Contents of spectral/__init__.py:
+```
+
+```
+
+Contents of spectral/bayesian_helpers.py:
+```
+"""Script to run RBA analysis for a given variable."""
+
+import os
+import subprocess
+from pathlib import Path
+from typing import Optional
+
+
+def run_rba_analysis(
+    sample: str,
+    command: str,
+    data_dir: str = "rba/data",
+    output_dir: str = "rba/output",
+    rlib: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Run the RBA (ridge-based analysis) for a given sample.
+
+    Args:
+        sample (str): The sample identifier, used to name input, output, and log files.
+        command (str): The command template to run the RBA analysis. Must include placeholders for `rlib`, `prefix`, and `input_table`.
+        data_dir (str, optional): Path to the directory where input data files are stored. Default is "rba/data".
+        output_dir (str, optional): Path to the directory where output (results and logs) will be stored. Default is "rba/output".
+        rlib (Optional[str], optional): Path to the R library for the analysis. If not provided, a default path is used.
+
+    Returns:
+        Optional[str]: If an error occurs during the analysis, returns the error message. Otherwise, returns None.
+
+    Side Effects:
+        - Creates necessary directories if they don't exist.
+        - Runs the RBA analysis command via subprocess.
+        - Saves log and result files in the specified output directory.
+        - Moves the generated ridge plot to the results folder.
+
+    Example:
+        command = "Rscript --vanilla my_script.R --rlib={rlib} --input={input_table} --output={prefix}"
+        run_rba_analysis(sample="sample1", command=command)
+    """
+
+    # Convert paths to Path objects
+    data_path = Path(data_dir)
+    output_path = Path(output_dir)
+
+    # Define log and results directories as subfolders of the output directory
+    log_path = output_path / "log"
+    results_path = output_path / "results"
+
+    # Ensure directories exist
+    for dir_path in [log_path, results_path]:
+        dir_path.mkdir(parents=True, exist_ok=True)
+
+    # Define paths using Path object
+    input_table = data_path / f"table_{sample}.txt"
+    log_diary = log_path / f"diary_{sample}.txt"
+    plot = results_path / f"ridge_{sample}.pdf"
+    prefix = results_path / f"results_{sample}"
+    results_file = results_path / f"results_{sample}.txt"
+
+    # Print or log paths for debugging (optional)
+    print(f"Input Table: {input_table}")
+    print(f"Log Diary: {log_diary}")
+    print(f"Plot: {plot}")
+    print(f"Results File: {results_file}")
+
+    # Default R library path if not provided
+    if rlib is None:
+        rlib = "/Users/daniel/PhD/Projects/meg-assr-2023/renv/library/R-4.4/aarch64-apple-darwin20"
+
+    # Construct the RBA command
+    cmd = command.format(rlib=rlib, prefix=prefix, input_table=input_table)
+
+    # Run the command
+    try:
+        result = subprocess.run(
+            cmd, shell=True, check=True, capture_output=True, text=True
+        )
+
+        # Write output and error streams to log file
+        with open(log_diary, "w", encoding="utf-8") as f:
+            f.write(result.stdout)
+            f.write(result.stderr)
+
+        # Move the generated ridge plot
+        os.rename("Intercept_ridge.pdf", plot)
+
+        print(f"Analysis completed successfully for {sample}")
+        print(f"Results saved to {results_file}")
+        print(f"Log saved to {log_diary}")
+        print(f"Ridge plot saved to {plot}")
+
+    except subprocess.CalledProcessError as e:
+        # Handle any errors that occur during the subprocess call
+        error_message = f"""
+        Error occurred while running analysis for {sample}
+        Error message: {e}
+        Command output:
+        {e.stdout}
+        {e.stderr}
+        """
+        print(error_message)
+
+        # Write error message to log file
+        with open(log_diary, "w", encoding="utf-8") as f:
+            f.write(error_message)
+
+        return error_message  # Return the error message in case of failure
+
+    return None  # Return None if the analysis is successful
+
+```
+
+Contents of spectral/visualization.py:
+```
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from plotnine import (
+    ggplot,
+    aes,
+    geom_histogram,
+    facet_wrap,
+    labs,
+    theme_minimal,
+    theme,
+    scale_x_continuous,
+    theme_matplotlib,
+)
+
+
+def plot_psd_and_exponents(
+    freqs: np.ndarray,
+    avg_psds: np.ndarray,
+    exponents: np.ndarray,
+    labels: list,
+    figsize: tuple = (15, 6),
+) -> None:
+    """Plot PSDs and exponent histogram."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
+
+    # Plot PSDs
+    for i in range(len(labels)):
+        ax1.loglog(freqs, avg_psds[i])
+    ax1.set_xlabel("Frequency (Hz)")
+    ax1.set_ylabel("Power Spectral Density (µV²/Hz)")
+    ax1.set_title("Average PSD across epochs")
+
+    # Plot histogram
+    ax2.hist(exponents, bins=25, edgecolor="black")
+    ax2.set_xlabel("Exponent Value")
+    ax2.set_ylabel("Frequency")
+    ax2.set_title("Histogram of Estimated Exponents")
+
+    plt.tight_layout()
+    plt.show()
+
+    # Print statistics
+    mean_exp = np.mean(exponents)
+    std_exp = np.std(exponents)
+    print(f"Exponent mean: {mean_exp:.2f} ± {std_exp:.2f}")
+
+
+def plot_peak_parameters_distribution(
+    fits: pd.DataFrame,
+    bin_count: int = 30,
+    fill_color: str = "blue",
+    alpha: float = 0.6,
+    figure_size: tuple = (8, 3),
+) -> "ggplot":
+    """
+    Create faceted histogram plots for CF, PW, and BW peak parameters.
+    """
+    # Select and reshape data using Pandas methods
+    plot_data = fits[["CF", "PW", "BW"]].melt(
+        value_vars=["CF", "PW", "BW"], var_name="parameter", value_name="value"
+    )
+
+    # Parameter labels
+    labels = {
+        "CF": "Center Frequency (Hz)",
+        "PW": "Power",
+        "BW": "Bandwidth (Hz)",
+    }
+
+    # Create plot with smaller size
+    plot = (
+        ggplot(plot_data, aes(x="value"))
+        + geom_histogram(bins=bin_count, fill=fill_color, alpha=alpha)
+        + facet_wrap("~parameter", scales="free", labeller=labels)
+        + labs(title="Distribution of Peak Parameters", x="Value", y="Count")
+        + theme_minimal()
+        + theme(figure_size=figure_size)  # Set figure size
+    )
+
+    return plot
+
+
+def plot_peak_relationships(
+    fits: pd.DataFrame, bins_number: int = 25, figsize: tuple = (12, 5)
+) -> tuple:
+    """
+    Plot 2D histograms of CF vs BW and CF vs PW with shared colorbar.
+
+    Parameters
+    ----------
+    fits : pd.DataFrame
+        DataFrame containing CF, BW, and PW columns
+    bins_number : int
+        Number of bins for 2D histogram
+    figsize : tuple
+        Figure size (width, height)
+
+    Returns
+    -------
+    tuple
+        Figure and axes objects
+    """
+    # Clean data
+    clean_fits = fits.dropna(subset=["CF", "BW", "PW"])
+
+    # Create figure with two subplots side by side
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
+
+    # Calculate common range for colorbar
+    h1 = np.histogram2d(clean_fits["CF"], clean_fits["BW"], bins=bins_number)[0]
+    h2 = np.histogram2d(clean_fits["CF"], clean_fits["PW"], bins=bins_number)[0]
+    vmin = min(h1.min(), h2.min())
+    vmax = max(h1.max(), h2.max())
+
+    # Create histplots
+    sns.histplot(
+        data=clean_fits,
+        x="CF",
+        y="BW",
+        bins=bins_number,
+        ax=ax1,
+        cbar=False,  # No colorbar for first plot
+        vmin=vmin,
+        vmax=vmax,
+    )
+    g = sns.histplot(
+        data=clean_fits,
+        x="CF",
+        y="PW",
+        bins=bins_number,
+        ax=ax2,
+        cbar=True,  # Only one colorbar
+        vmin=vmin,
+        vmax=vmax,
+    )
+
+    # Set titles
+    ax1.set_title("Center Frequency vs Bandwidth")
+    ax2.set_title("Center Frequency vs Power")
+
+    plt.tight_layout()
+    return fig, (ax1, ax2)
+```
+
+Contents of spectral/utils.py:
+```
+"""
+Includes utility functions for the project.
+"""
+
+import sys
+import os
+import io
+import functools
+import inspect
+from contextlib import contextmanager, redirect_stdout
+from importlib import resources
+from pathlib import Path
+import pandas as pd
+import scipy.io as sio
+
+
+def load_conditions_coding() -> pd.DataFrame:
+    """
+    Load coding telling us what conditions was representing specific recording (Sham or real TDCS)
+    and extract session information
+    """
+    keys_path = resources.files("spectral.data").joinpath("keys.mat")
+    keys = sio.loadmat(keys_path)
+    row_names = keys["keys"].tolist()[0]
+
+    df = pd.DataFrame()
+    df["subject_session"] = [el[0].flatten()[0] for el in row_names]
+    df["subject_session"] = df["subject_session"].astype("category").str.strip()
+    df["T"] = [el[1].flatten()[0] for el in row_names]
+
+    # Extract session (A or B) from subject_session
+    df["session"] = df["subject_session"].str[-1]
+    df["subject"] = df["subject_session"].str.extract(r"(Subject\d+)")
+    df["session_rs"] = df["session"].map({"A": "Session1", "B": "Session2"})
+    subject_id_list = [f"S{str(i).zfill(3)}" for i in range(1, 16)]
+    # Extract subject number and session
+    df[["subject_num"]] = df["subject_session"].str.extract(r"Subject(\d+)")
+    # Map subject numbers to the predefined list
+    subject_map = {str(i + 1).zfill(2): sid for i, sid in enumerate(subject_id_list)}
+    df["subject_rs"] = df["subject_num"].map(subject_map)
+
+    return df.drop(columns=["subject_num"])
+
+
+def assign_run_status(df: pd.DataFrame) -> pd.DataFrame:
+    """Assign pre/post status based on the 'run' column"""
+    return df.assign(P=lambda x: x["run"].astype("str").str.lstrip("0")).replace(
+        {
+            "P": {
+                "1": "pre",
+                "2": "post",
+                "3": "pre",
+                "4": "post",
+            }
+        }
+    )
+
+
+def assign_condition(df: pd.DataFrame) -> pd.DataFrame:
+    """Assign metadata to the dataframe"""
+    assr_keys = load_conditions_coding()
+    return df.assign(
+        subject_cond=lambda x: "Subject"
+        + x["sub"].astype(str).str.zfill(2)
+        + "_"
+        + x["ses"]
+    ).join(assr_keys.set_index("subject_cond"), on="subject_cond")
+
+
+@contextmanager
+def suppress_stdout():
+    """Suppress stdout."""
+    with io.open(os.devnull, "w", encoding="utf-8") as devnull:
+        with redirect_stdout(devnull):
+            try:
+                yield
+            except Exception:
+                print(sys.exc_info()[0])
+                raise
+
+
+@contextmanager
+def empty_folder_check(folder):
+    """
+    A context manager that checks if a folder is empty before allowing processing.
+
+    Parameters:
+    - folder (str): Path to the folder to check
+
+    Yields:
+    - bool: True if the folder is empty, False otherwise
+
+    Usage:
+    with empty_folder_check(folder_path) as is_empty:
+        if is_empty:
+            # Perform processing
+        else:
+            # Skip processing
+    """
+    path = Path(folder) if isinstance(folder, str) else folder
+    path.mkdir(parents=True, exist_ok=True)
+    is_empty = not any(path.iterdir())
+
+    yield is_empty
+
+    print(
+        f"Processing in {folder} {'completed' if is_empty else 'was skipped as it was not empty'}."
+    )
+
+
+def debug_print(*variables_to_print):
+    """A decorator that prints the specified variables from the function's local scope."""
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Call the original function
+            result = func(*args, **kwargs)
+
+            # Get the function's signature
+            sig = inspect.signature(func)
+
+            # Bind the arguments to the signature
+            bound_args = sig.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+
+            # Create a dictionary of parameter names and values
+            local_vars = dict(bound_args.arguments)
+
+            # Update with any other local variables
+            local_vars.update(inspect.currentframe().f_locals)
+
+            # Print the specified variables
+            print(f"Debug info for {func.__name__}:")
+            for var in variables_to_print:
+                if var in local_vars:
+                    print(f"  {var} = {local_vars[var]}")
+                else:
+                    print(f"  {var} not found in local scope")
+
+            return result
+
+        return wrapper
+
+    return decorator
+
+```
+
+Contents of spectral/spectral.py:
+```
+"""
+This module contains functions for spectral analysis of EEG data.
+"""
+
+from typing import List, Dict
+
+import numpy as np
+import pandas as pd
+
+import matplotlib.pyplot as plt
+import mne
+from mne_bids import get_entities_from_fname
+
+
+from specparam.plts.spectra import plot_spectra
+from specparam import SpectralGroupModel
+from specparam.core.funcs import infer_ap_func
+from specparam.core.info import get_ap_indices
+
+plt.rcParams["figure.figsize"] = [10, 6]  # Width, Height in inches
+
+def compute_psd_fit_spectral_model(
+    loaded_epochs: Dict[str, mne.BaseEpochs],
+    fg: SpectralGroupModel,
+    freq_range: List[float],
+    n_fft: int | None = None,
+) -> pd.DataFrame:
+    """
+    Process loaded MEG epochs by computing power spectral density (PSD),
+    fitting a spectral group model, and creating a consolidated DataFrame
+    with results and metadata.
+    """
+    dataframes_list: List[pd.DataFrame] = []
+
+    for epoch_name, epoch_data in loaded_epochs.items():
+        print(f"Processing {epoch_name}...")
+
+        # Compute PSD and fit spectral model
+        psd_data, spectra, freqs = process_epoch_data(epoch_data, n_fft)
+        fg.fit(freqs, spectra, freq_range)
+
+        # Create and populate DataFrame
+        df = create_and_populate_dataframe(fg, epoch_data, epoch_name)
+        dataframes_list.append(df)
+
+    return pd.concat(dataframes_list, ignore_index=True)
+
+
+def process_epoch_data(epoch_data: mne.BaseEpochs, n_fft: int | None = None) -> tuple:
+    """
+    Compute PSD and extract spectra and frequencies from epoch data.
+    """
+    fs = epoch_data.info["sfreq"]
+    if n_fft is None:
+        n_fft = int(2 * fs)
+
+    welch_params = {
+        "method": "welch",
+        "n_overlap": int(fs / 2),
+        "n_jobs": -1,
+        "n_fft": n_fft,
+        "picks": "misc",
+        "average": "median",
+    }
+    psd = epoch_data.compute_psd(**welch_params).average()
+    spectra, freqs = psd.get_data(picks="misc", return_freqs=True)
+
+    return psd, spectra, freqs
+
+
+def create_and_populate_dataframe(
+    fg: SpectralGroupModel, epoch_data: mne.BaseEpochs, epoch_name: str
+) -> pd.DataFrame:
+    """
+    Create a DataFrame with spectral model results and metadata.
+    """
+    df = specparam2pandas(fg)
+
+    # Add channel information
+    ch_df = pd.DataFrame(
+        {
+            "label": epoch_data.info["ch_names"],
+            "ID": range(len(epoch_data.info["ch_names"])),
+        }
+    )
+    df = pd.merge(df, ch_df, left_on="ID", right_on="ID", how="left")
+
+    # Add metadata from filename
+    entities = get_entities_from_fname(epoch_name, on_error="warn")
+    for key in ["subject", "session", "task", "run"]:
+        df[key] = entities.get(key)
+
+    return df
+
+
+def specparam2pandas(fg):
+    """
+    Converts a SpectralGroupModel object into a pandas DataFrame, with peak parameters and
+    corresponding aperiodic fit information.
+
+    Args:
+    -----
+    fg : specpramGroup
+        The SpectralGroupModel object containing the fitting results.
+
+    Returns:
+    --------
+    peaks_df : pandas.DataFrame
+        A DataFrame with the peak parameters and corresponding aperiodic fit information.
+        The columns are:
+        - 'CF': center frequency of each peak
+        - 'PW': power of each peak
+        - 'BW': bandwidth of each peak
+        - 'error': fitting error of the aperiodic component
+        - 'r_squared': R-squared value of the aperiodic fit
+        - 'exponent': exponent of the aperiodic component
+        - 'offset': offset of the aperiodic component
+        - 'knee': knee parameter of the aperiodic component [if is initially present in the fg object]
+    Notes:
+    ------
+    This function creates two DataFrames. The first DataFrame `specparam_aperiodic`
+    contains the aperiodic fit information and is based on the `aperiodic_params`
+    attribute of the SpectralGroupModel object. The columns are inferred using the
+    `get_ap_indices()` and `infer_ap_func()` functions from the specparam package.
+    The second DataFrame `peak_df` contains the peak parameters and is based on the
+    `peak_params` attribute of the SpectralGroupModel object. The column names are renamed
+    to match the headers of `fooof_aperiodic`, and the 'ID' column is cast to integer.
+    The two DataFrames are then merged based on a shared 'ID' column.
+    """
+    peaks_df = (
+        pd.DataFrame(fg.get_params("peak_params"))  # prepare peaks dataframe
+        .set_axis(["CF", "PW", "BW", "ID"], axis=1)  # rename cols
+        .astype({"ID": int})
+    )
+    specparam_aperiodic = (
+        pd.DataFrame(
+            fg.get_params("aperiodic_params"),
+            columns=get_ap_indices(
+                infer_ap_func(np.transpose(fg.get_params("aperiodic_params")))
+            ),
+        )
+        .assign(error=fg.get_params("error"), r_squared=fg.get_params("r_squared"))
+        .reset_index(names=["ID"])
+    )
+
+    # Now, let's merge the dataframes
+    return pd.merge(specparam_aperiodic, peaks_df, on="ID", how="left")
+
+
+def examine_spectra(fg, subject):
+    """Compare the power spectra between low and high exponent channels"""
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+    def argmedian(arr):
+        return np.argsort(arr)[len(arr) // 2]
+
+    exps = fg.get_params("aperiodic_params", "exponent")
+    r_squared = fg.get_params("r_squared")
+    spectra_exp = [
+        fg.get_model(np.argmin(exps)).power_spectrum,
+        fg.get_model(argmedian(exps)).power_spectrum,
+        fg.get_model(np.argmax(exps)).power_spectrum,
+    ]
+
+    labels_spectra_exp = [
+        f"Low Exponent {format(np.min(exps), '.2f')}",
+        f"Median Exponent {format(np.median(exps), '.2f')}",
+        f"High Exponent {format(np.max(exps), '.2f')}",
+    ]
+
+    plot_spectra(
+        fg.freqs,
+        spectra_exp,
+        ax=ax[0],
+        labels=labels_spectra_exp,
+    )
+
+    spectra_r_squared = [
+        fg.get_model(np.argmin(r_squared)).power_spectrum,
+        fg.get_model(argmedian(r_squared)).power_spectrum,
+        fg.get_model(np.argmax(r_squared)).power_spectrum,
+    ]
+
+    labels_spectra_r_squared = [
+        f"Low R_squared  {format(np.min(r_squared), '.2f')}",
+        f"Median R_squared {format(np.median(r_squared), '.2f')}",
+        f"High R_squared {format(np.max(r_squared), '.2f')}",
+    ]
+
+    my_colors = ["blue", "green", "red"]
+    plot_spectra(
+        fg.freqs,
+        spectra_r_squared,
+        ax=ax[1],
+        labels=labels_spectra_r_squared,
+        colors=my_colors,
+    )
+    ylim1 = ax[0].get_ylim()
+    ylim2 = ax[1].get_ylim()
+    # Set the same limits on the y-axis for both plots
+    ax[0].set_ylim(min(ylim1[0], ylim2[0]), max(ylim1[1], ylim2[1]))
+    ax[1].set_ylim(min(ylim1[0], ylim2[0]), max(ylim1[1], ylim2[1]))
+    fig.suptitle(
+        f"sub-{subject} - Power spectra comparison between low, median and high exponent and R_squared values"
+    )
+    # Adjust layout to prevent overlap
+    plt.tight_layout()
+
+    return fig  # Return the figure object
+
+
+def plot_spectra_models_generalized(fg, data, data_type="exps"):
+    """
+    Plots spectra models based on specified data type (experimental data or r_squared).
+
+    Parameters:
+    - fg: The FOOOFGroup object.
+    - data: Array-like, data to determine models (experimental data or r_squared).
+    - labels: Labels for each plotted spectra model.
+    - data_type: Type of data to plot ('exps' for experimental data, 'r_squared' for r_squared values).
+    """
+
+    # Define a helper function for median
+    def argmedian(data):
+        return np.argsort(data)[len(data) // 2]
+
+    # Select the appropriate data for model generation
+    if data_type == "exps":
+        indices = [np.argmin(data), argmedian(data), np.argmax(data)]
+        labels = [
+            f"Low {data_type} {format(np.min(data), '.2f')}",
+            f"Median {data_type} {format(np.median(data), '.2f')}",
+            f"High {data_type} {format(np.max(data), '.2f')}",
+        ]
+    elif data_type == "r_squared":
+        indices = [np.argmin(data), argmedian(data), np.argmax(data)]
+        labels = [
+            f"Low R_squared {format(np.min(data), '.2f')}",
+            f"Median R_squared {format(np.median(data), '.2f')}",
+            f"High R_squared {format(np.max(data), '.2f')}",
+        ]
+    else:
+        raise ValueError("data_type must be 'exps' or 'r_squared'")
+
+    # Generate models based on the selected data
+    spectra_models = [fg.get_model(idx, regenerate=True) for idx in indices]
+
+    # Iterate over each model and its corresponding label
+    for model, label in zip(spectra_models, labels):
+        # Print results and plot extracted model fit
+        model.print_results()
+        model.plot()
+        print(label)
+
+
+def plot_models(fg, param_choice="exponent"):
+    """
+    Plot models from a FOOOF group object based on exponent or R-squared values.
+
+    This function generates three plots (low, median, and high) for the specified
+    parameter, prints the results for each model, and displays the corresponding label.
+
+    Parameters:
+    -----------
+    fg : FOOOFGroup
+        The FOOOF group object containing the models to plot.
+    param_choice : str, optional
+        The parameter to use for selecting models. Must be either 'exponent' or 'r_squared'.
+        Default is 'exponent'.
+
+    Raises:
+    -------
+    ValueError
+        If param_choice is not 'exponent' or 'r_squared'.
+    """
+    if param_choice.lower() == "exponent":
+        param = fg.get_params("aperiodic_params", "exponent")
+        param_name = "Exponent"
+    elif param_choice.lower() == "r_squared":
+        param = fg.get_params("r_squared")
+        param_name = "R-squared"
+    else:
+        raise ValueError("param_choice must be either 'exponent' or 'r_squared'")
+
+    def argmedian(arr):
+        return np.argsort(arr)[len(arr) // 2]
+
+    labels_spectra = [
+        f"Low {param_name} {format(np.min(param), '.2f')}",
+        f"Median {param_name} {format(np.median(param), '.2f')}",
+        f"High {param_name} {format(np.max(param), '.2f')}",
+    ]
+
+    spectra_models = [
+        fg.get_model(np.argmin(param), regenerate=True),
+        fg.get_model(argmedian(param), regenerate=True),
+        fg.get_model(np.argmax(param), regenerate=True),
+    ]
+
+    for fm, label in zip(spectra_models, labels_spectra):
+        fm.print_results()
+        fm.plot()
+        plt.title(label)
+        plt.show()
+        print(label)
+
+```
+
+Contents of spectral/settings.py:
+```
+import os
+from pathlib import Path
+from typing import Any, Dict, Union, Optional
+
+
+class Settings:
+    """Class to store and access settings loaded from a file."""
+
+    def __init__(self, settings_dict: Dict[str, Any]):
+        self._settings = settings_dict
+
+    def __getattr__(self, name: str) -> Any:
+        try:
+            return self._settings[name]
+        except KeyError:
+            raise AttributeError(f"Setting '{name}' not found.")
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Safely get a value, returning a default if not found."""
+        keys = key.split(".")
+        value = self._settings
+        for k in keys:
+            if isinstance(value, dict):
+                value = value.get(k)
+            else:
+                return default
+        return value if value is not None else default
+
+    def get_path(self, key: str, **kwargs) -> Path:
+        """Get a path, replacing placeholders with provided values or other settings."""
+        value = self.get(key)
+        if not isinstance(value, str):
+            raise ValueError(f"The key '{key}' does not correspond to a path string.")
+
+        for k, v in kwargs.items():
+            value = value.replace(f"{{{k}}}", str(v))
+
+        while "{" in value and "}" in value:
+            start, end = value.find("{"), value.find("}")
+            if start == -1 or end == -1:
+                break
+            placeholder = value[start + 1 : end]
+            replacement = str(self.get(placeholder, ""))
+            value = value[:start] + replacement + value[end + 1 :]
+
+        return Path(value)
+
+
+def find_project_root(start_path: Union[str, Path] = None) -> Path:
+    """Find the project root by looking for a settings file or common project markers."""
+    if start_path is None:
+        start_path = Path.cwd()
+    start_path = Path(start_path).resolve()
+
+    markers = [
+        "settings.toml",
+        "settings.yaml",
+        "settings.yml",
+        "settings.json",
+        ".git",
+        "pyproject.toml",
+    ]
+
+    for path in [start_path] + list(start_path.parents):
+        if any((path / marker).exists() for marker in markers):
+            return path
+
+    raise FileNotFoundError("Could not find project root.")
+
+
+def load_settings(
+    filename: str = "settings.toml", root_dir: Union[str, Path] = None
+) -> Settings:
+    """Load settings from a file and return a Settings object."""
+    if root_dir is None:
+        root_dir = find_project_root()
+    settings_path = Path(root_dir) / filename
+
+    if not settings_path.exists():
+        raise FileNotFoundError(f"Settings file not found: {settings_path}")
+
+    file_format = settings_path.suffix.lower().lstrip(".")
+
+    if file_format in ("toml", "tml"):
+        import tomllib
+
+        with open(settings_path, "rb") as file:
+            settings_dict = tomllib.load(file)
+    elif file_format in ("yaml", "yml"):
+        import yaml
+
+        with open(settings_path, "r") as file:
+            settings_dict = yaml.safe_load(file)
+    elif file_format == "json":
+        import json
+
+        with open(settings_path, "r") as file:
+            settings_dict = json.load(file)
+    else:
+        raise ValueError(f"Unsupported file format: {file_format}")
+
+    return Settings(settings_dict)
+
+
+# Usage example
+if __name__ == "__main__":
+    try:
+        settings = load_settings()
+        print("Settings loaded successfully:")
+
+        # Accessing values (assuming a structure similar to the TOML example)
+        print(f"Project name: {settings.project.name}")
+        print(f"Analysis method: {settings.get('analysis.method')}")
+        print(f"Data path: {settings.get_path('paths.data')}")
+
+        # Using default values
+        print(f"Unknown setting: {settings.get('unknown.setting', 'default_value')}")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+```
+
+Contents of spectral/itpc.py:
+```
+"""Inter-Trial Phase Consistency (ITPC) analysis."""
+
+from typing import NamedTuple
+import matplotlib.pyplot as plt
+import numpy as np
+import mne
+import pandas as pd
+from mne_bids import get_entities_from_fname
+
+
+class ITPC(NamedTuple):
+    """Class to store Inter-Trial Phase Consistency (ITPC) data."""
+
+    data: np.ndarray
+    times: np.ndarray
+
+
+def compute_itpc(epochs, freqs, n_cycles) -> ITPC:
+    """Compute Inter-Trial Phase Coherence (ITC) using Morlet wavelets."""
+    _, itc = epochs.compute_tfr(
+        method="morlet",
+        freqs=freqs,
+        average=True,
+        n_cycles=n_cycles,
+        return_itc=True,
+        picks="misc",
+        n_jobs=-1,
+    )
+
+    # Check if the second dimension (frequency) has more than one element
+    if itc.data.shape[1] > 1:
+        # Average along the frequency dimension
+        itc_data = itc.data.mean(axis=1)
+    else:
+        # Squeeze out the frequency dimension if there's only one frequency
+        itc_data = np.squeeze(itc.data, axis=1)
+
+    return ITPC(data=itc_data, times=itc.times)
+
+
+def extract_itpc_values(itpc: ITPC, tmin: float = -0.5, tmax: float = 1.0) -> ITPC:
+    """Extract ITPC values for the entire epoch."""
+    mask = (itpc.times >= tmin) & (itpc.times <= tmax)
+    return ITPC(data=itpc.data[:, mask], times=itpc.times[mask])
+
+
+def z_normalize_itpc(
+    itpc: ITPC, tmin_baseline: float = -0.5, tmax_baseline: float = -0.2
+) -> ITPC:
+    """Z-normalize ITPC data based on the baseline period."""
+    baseline_mask = (itpc.times >= tmin_baseline) & (itpc.times <= tmax_baseline)
+    baseline_mean = itpc.data[:, baseline_mask].mean(axis=1, keepdims=True)
+    baseline_std = itpc.data[:, baseline_mask].std(axis=1, keepdims=True)
+    z_normalized_data = (itpc.data - baseline_mean) / baseline_std
+    return ITPC(data=z_normalized_data, times=itpc.times)
+
+
+def average_itpc(itpc: ITPC, tmin_avg=0.3, tmax_avg=0.7):
+    """Average z-normalized ITPC over the specified time window for each channel."""
+    avg_mask = (itpc.times >= tmin_avg) & (itpc.times <= tmax_avg)
+    return itpc.data[:, avg_mask].mean(
+        axis=1
+    )  # Average across the time window for each channel
+
+
+def create_itpc_dataframe(value, epochs, type, metadata):
+    """Create a DataFrame with averaged z-normalized ITPC values and metadata."""
+    return pd.DataFrame(
+        {
+            "ch_names": epochs.info["ch_names"],
+            "value": value,
+            "type": type,
+            # print(entities)
+            "subject": metadata["subject"],
+            "session": metadata["session"],
+            "task": metadata["task"],
+            "run": metadata["run"],
+        }
+    )
+
+
+def process_single_file(file_path, freqs, n_cycles):
+    """Process a single file to compute z-normalized and averaged ITPC and create a DataFrame."""
+    epochs = mne.read_epochs(file_path)
+    metadata = get_entities_from_fname(file_path, on_error="warn")
+
+    itpc = compute_itpc(epochs, freqs, n_cycles)
+    itpc_extracted = extract_itpc_values(itpc)
+
+    # Z-normalize ITPC and average over the specified time window
+    z_normalized_itpc = z_normalize_itpc(
+        itpc_extracted, tmin_baseline=-0.5, tmax_baseline=-0.2
+    )
+    avg_z_itpc = average_itpc(z_normalized_itpc, tmin_avg=0.3, tmax_avg=0.7)
+    df_znorm = create_itpc_dataframe(
+        value=avg_z_itpc, epochs=epochs, type="z_normalized_itpc", metadata=metadata
+    )
+
+    # Compute ITPC and average over the prestimuli time window
+    prestim_itpc = average_itpc(itpc_extracted, tmin_avg=-0.5, tmax_avg=-0.2)
+    df_pre = create_itpc_dataframe(
+        value=prestim_itpc, epochs=epochs, type="prestim_itpc", metadata=metadata
+    )
+
+    # Compute ITPC and average over the prestimuli time window
+    prestim_itpc = average_itpc(itpc_extracted, tmin_avg=0.3, tmax_avg=0.7)
+    df_stim = create_itpc_dataframe(
+        value=prestim_itpc, epochs=epochs, type="stim_itpc", metadata=metadata
+    )
+    return pd.concat([df_znorm, df_pre, df_stim])
+
+
+def plot_itpc(
+    itpc,
+    vmin=None,
+    vmax=None,
+    title="Inter-Trial Phase Consistency (ITPC)",
+    label="ITPC",
+):
+    """
+    Plot the Inter-Trial Phase Consistency (ITPC) data.
+
+    Parameters:
+    itpc : object
+        The ITPC object containing the data to be plotted.
+    vmin : float, optional
+        The minimum value for the color scale. If None, it will be set to the minimum value of the data.
+    vmax : float, optional
+        The maximum value for the color scale. If None, it will be set to the maximum value of the data.
+    """
+    # Set vmin and vmax to data-driven values if not provided
+    if vmin is None:
+        vmin = itpc.data.min()
+    if vmax is None:
+        vmax = itpc.data.max()
+
+    # Plot the ITPC data
+    fig, ax = plt.subplots()
+    im = ax.imshow(
+        itpc.data,
+        aspect="auto",
+        origin="lower",
+        extent=(itpc.times[0], itpc.times[-1], 0, itpc.data.shape[0]),
+        cmap="RdBu_r",
+        vmin=vmin,
+        vmax=vmax,
+    )
+    ax.set_title(title)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Channels")
+    fig.colorbar(im, ax=ax, label=label)
+    plt.show()
+
+```
+
+Contents of spectral/brain_atlas.py:
+```
+"""Functions to load and plot the Desikan-Killiany brain atlas."""
+
+import os
+from importlib import resources
+import geopandas as gpd
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+
+
+def dk_atlas():
+    """Load the Desikan-Killiany brain atlas."""
+    gpkg_path = resources.files("spectral.data").joinpath("brain.gpkg")
+    return gpd.read_file(gpkg_path)
+
+
+def convert_roi_names(rois_df, column="label", atlas="dk", new_column="roi"):
+    """Create a dictionary to map old names to new names
+    Usage
+    rois = convert_roi_names(rois_df, column="label")
+    """
+    if atlas == "dk":
+        br_df = dk_atlas()
+
+    name_map = {}
+
+    for _, row in rois_df.iterrows():
+        old_name = row[column]
+
+        # Remove the hemisphere indicator (L or R) from the end
+        base_name = old_name[:-2] if old_name.endswith((" L", " R")) else old_name
+
+        # Convert to lowercase and replace spaces with underscores
+        new_name = base_name.lower().replace(" ", "_")
+
+        # Add 'lh_' or 'rh_' prefix based on the original name
+        hemisphere = "lh_" if old_name.endswith(" L") else "rh_"
+        new_name = hemisphere + new_name
+
+        name_map[old_name] = new_name
+
+    # Apply the name mapping to the 'label' column
+    rois_df[new_column] = rois_df[column].map(name_map)
+
+    # Verify that all new names exist in br_df
+    br_labels = set(br_df["label"].dropna())
+    if missing_labels := set(rois_df[new_column]) - br_labels:
+        print(
+            f"Warning: The following converted labels are not in br_df: {missing_labels}"
+        )
+
+    return rois_df
+
+
+def plot_brain(
+    atlas,
+    data_df=None,
+    value_column=None,
+    title="Brain Region Plot",
+    cmap="viridis",
+    theme="dark",
+    default_color="lightblue",
+    dpi=300,
+    figsize=(16, 12),
+):
+    """
+    Plot the brain regions with the specified data column or just the atlas.
+    If data_df and value_column are not provided, it plots the atlas itself.
+    Returns the figure for further customization or saving.
+    """
+    # Set the style based on the theme
+    if theme == "dark":
+        plt.style.use("dark_background")
+        title_color = "white"
+        edge_color = "white"
+        missing_color = "darkgray"
+    else:
+        plt.style.use("default")
+        title_color = "black"
+        edge_color = "black"
+        missing_color = "lightgray"
+
+    # Create a copy of the atlas
+    br_copy = atlas.copy()
+
+    # If data_df and value_column are provided, merge the data
+    if data_df is not None and value_column is not None:
+        br_copy = br_copy.merge(data_df, left_on="label", right_on="roi", how="left")
+        vmin = br_copy[value_column].min()
+        vmax = br_copy[value_column].max()
+        cmap = plt.get_cmap(cmap)
+    else:
+        # If no data provided, use a constant value for coloring
+        br_copy["constant"] = 1
+        value_column = "constant"
+        vmin = 0
+        vmax = 1
+        cmap = mcolors.ListedColormap([default_color])
+
+    # Set up the colormap
+    cmap.set_bad(color=missing_color)
+
+    fig, axs = plt.subplots(2, 2, figsize=figsize, dpi=dpi)
+    fig.suptitle(title, fontsize=16, y=0.95, color=title_color)
+    axs = axs.ravel()  # Flatten axs for easier indexing
+
+    # Filter and plot for each combination of 'side' and 'hemi'
+    plots = []
+    for i, (side, hemi) in enumerate(
+        [
+            ("lateral", "left"),
+            ("lateral", "right"),
+            ("medial", "left"),
+            ("medial", "right"),
+        ]
+    ):
+        plot_data = br_copy[(br_copy["side"] == side) & (br_copy["hemi"] == hemi)]
+        plot = plot_data.plot(
+            column=value_column,
+            ax=axs[i],
+            cmap=cmap,
+            edgecolor=edge_color,
+            linewidth=0.5,
+            missing_kwds={"color": missing_color},
+            vmin=vmin,
+            vmax=vmax,
+        )
+        plots.append(plot)
+        axs[i].axis("off")
+        axs[i].set_title(f"{side.capitalize()} {hemi.capitalize()}", color=title_color)
+
+    # Add colorbar only if data is provided
+    if data_df is not None and value_column is not None:
+        cax = fig.add_axes((0.92, 0.15, 0.02, 0.7))  # [left, bottom, width, height]
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
+        sm.set_array([])
+        cbar = fig.colorbar(sm, cax=cax)
+        cbar.set_label(value_column, rotation=270, labelpad=20, color=title_color)
+        cbar.ax.yaxis.set_tick_params(color=title_color)
+        plt.setp(plt.getp(cbar.ax.axes, "yticklabels"), color=title_color)
+
+    # Adjust layout without using tight_layout
+    fig.subplots_adjust(
+        top=0.9, bottom=0.1, left=0.1, right=0.9, wspace=0.1, hspace=0.1
+    )
+
+    return fig
+
+```
+
+Contents of spectral/preprocess_rs.py:
+```
+"""Functions to load ASP0 data from Brainstorm and create MNE Epochs objects."""
+
+from typing import List, Dict
+import re
+import os
+from pathlib import Path
+from glob import glob
+from collections import defaultdict
+
+import numpy as np
+import scipy.io as sio
+from tqdm import tqdm
+import mne
+
+
+def get_trials(sub: str, session: str, data_folder: str) -> List[Path]:
+    """Get trial files for a given subject and session."""
+    return [Path(p) for p in glob(f"{data_folder}/ASP0_{sub}_{session}_*.mat")]
+
+
+def sort_trials(file_paths: List[Path]) -> Dict[str, List[Path]]:
+    """Sort trial files by iteration number."""
+    iter_files = defaultdict(list)
+    for file in file_paths:
+        if match := re.search(r"(\d+)_clean_resample", file.name):
+            iter_number = match[1]
+            iter_files[iter_number].append(file)
+    return dict(iter_files)
+
+
+def load_matlab_file(trial: Path) -> dict:
+    """Load a MATLAB file and return its contents."""
+    return sio.loadmat(trial)
+
+
+def build_mne_epochs_from_matlab_files(file_paths: List[Path]):
+    """Build MNE Epochs object from multiple MATLAB files."""
+    all_data = []
+    ch_names = None
+    sfreq = 600.0  # Assuming this is constant for all files
+
+    for file_path in tqdm(file_paths, desc="Loading files"):
+        try:
+            mat_data = load_matlab_file(file_path)
+            data = mat_data["Value"]  # Shape should be (68, 3000)
+            all_data.append(data)
+
+            if ch_names is None:
+                region_struct = (
+                    mat_data["Atlas"][0, 0]["Scouts"]["Label"].ravel().tolist()
+                )
+                ch_names = [item.item() for item in region_struct]
+
+        except Exception as e:
+            print(f"Error loading {file_path}: {e}")
+
+    if not all_data:
+        raise ValueError("No valid epochs were loaded.")
+
+    # Stack all data into a 3D array (n_epochs, n_channels, n_times)
+    all_data = np.stack(all_data, axis=0)
+
+    # Create MNE info object
+    info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types="misc")
+
+    # Create events array
+    events = np.column_stack(
+        [
+            np.arange(len(all_data)) * 3000,
+            np.zeros(len(all_data), dtype=int),
+            np.ones(len(all_data), dtype=int),
+        ]
+    )
+
+    # Create MNE Epochs object
+    return mne.EpochsArray(all_data, info, events, tmin=0)
+
+
+def process_and_save_meg_epochs_by_session(
+    sub: str, sessions: List[str], data_folder: str, output_folder: str
+):
+    """
+    This function performs the following steps for each session:
+    1. Retrieves trial files for the subject and session
+    2. Sorts the trials
+    3. For each iteration (run):
+        a. Builds MNE epoch objects from MATLAB files
+        b. Saves the epoch objects in BIDS-compliant .fif format
+
+    Parameters:
+    - sub (str): Subject identifier
+    - sessions (List[str]): List of session identifiers
+    - data_folder (str): Path to the folder containing raw data
+    - output_folder (str): Path to the folder where processed data will be saved
+    """
+    for session in sessions:
+        print(f"\nProcessing {sub} - {session}")
+        files = get_trials(sub, session, data_folder)
+        sorted_dict = sort_trials(files)
+
+        for iter_number, file_list in sorted_dict.items():
+            print(f"\nProcessing iteration {iter_number}")
+            epochs = build_mne_epochs_from_matlab_files(file_list)
+            print(f"Created Epochs object: {epochs}")
+
+            # Save the Epochs object
+            output_file = os.path.join(
+                output_folder,
+                f"sub-{sub}_ses-{session}_task-rest_run-{iter_number}-epo.fif",
+            )
+            epochs.save(output_file, overwrite=True)
+            print(f"Saved Epochs to: {output_file}")
+
+    print("\nProcessing complete.")
+
+
+def load_subject_meg_epochs_to_dict(
+    data_folder: str, sub: str = "S001", pattern: str = "sub-{}_*-epo.fif"
+) -> Dict[str, mne.BaseEpochs]:
+    """
+    Load MEG Epochs files for a given subject into a flat dictionary.
+
+    Parameters:
+    - data_folder (str): Path to the folder containing the -epo.fif files
+    - subject (str): Subject identifier (default is "S001")
+
+    Returns:
+    - Dict[str, mne.Epochs]: Dictionary with filenames (without extension) as keys and loaded Epochs as values
+    """
+    loaded_data = {}
+
+    # Create the glob pattern to match files for this subject
+    file_pattern = os.path.join(data_folder, pattern.format(sub))
+
+    # Find all matching files
+    epoch_files = sorted(glob(file_pattern))
+
+    if not epoch_files:
+        print(f"No files found for {sub}")
+        return loaded_data
+
+    # Load each file and store in the dictionary
+    for file in epoch_files:
+        try:
+            epochs = mne.read_epochs(file, preload=True)
+            # Get the filename without path and extension
+            key = os.path.splitext(os.path.basename(file))[0]
+            loaded_data[key] = epochs
+            print(f"Loaded: {key}")
+        except Exception as e:
+            print(f"Error loading {file}: {e}")
+
+    return loaded_data
+
+```
+

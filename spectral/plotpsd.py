@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import sys
+from mne_bids import get_entities_from_fname
 
 from .preprocess_assr import apply_window_and_pad
-from .utils import parse_key_value_pairs_from_filename
 
 
 def plot_psd_pre_post(epochs, metadata):
@@ -22,7 +22,7 @@ def plot_psd_pre_post(epochs, metadata):
     """
     fig, axs = plt.subplots(1, 2, figsize=(18, 6))
     fig.suptitle(
-        f"This is extracted values for sub-{metadata['sub']}_ses-{metadata['ses']}",
+        f"This is extracted values for sub-{metadata['subject']}_ses-{metadata['session']}",
         fontsize=16,
     )
     epochs.compute_psd(
@@ -42,7 +42,7 @@ def plot_psd_padded_pre_post(epochs, metadata):
     fig, axs = plt.subplots(2, 2, figsize=(24, 9))
     axs = axs.flatten()
     fig.suptitle(
-        f"This is extracted values for sub-{metadata['sub']}_ses-{metadata['ses']}_run-{metadata['run']}",
+        f"This is extracted values for sub-{metadata['subject']}_ses-{metadata['session']}_run-{metadata['run']}",
         fontsize=16,
     )
     for i, (time, condition) in enumerate(zip(times, conditions)):
