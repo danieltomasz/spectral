@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import sys
 from mne_bids import get_entities_from_fname
 
-from .preprocess_assr import apply_window_and_pad
+from .preprocess import apply_window_and_pad
 
 
 def plot_psd_pre_post(epochs, metadata):
